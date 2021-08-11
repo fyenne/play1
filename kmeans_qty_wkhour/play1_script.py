@@ -1,6 +1,6 @@
 
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import numpy as np  
+import pandas as pd 
 import matplotlib.pyplot as plt
 from sklearn import cluster
 import os
@@ -18,8 +18,13 @@ from datetime import date
 """
 load data
 """
+
+
 df = spark.sql("""select * 
         from dsc_dws.dws_dsc_wh_ou_daily_kpi_sum""")
+
+ 
+# df = pd.read_csv('./play1/daily_kpi_all_810.csv')
 df.show(15,False)
 df = df.select("*").toPandas()
 print(df.head())
@@ -61,11 +66,11 @@ df = df[[
     'working_hour_per_head', 'location_usage_rate', 'location_idle_rate']]
 df = df.fillna(0)
 df = df[df['total_working_hour'] != 0]
-
+df.head()
 """
 calculations functions def
 """
-
+mnb_kmeans_in('CN-214')
 
 def mnb_kmeans_in(ou_code):
         """
@@ -187,8 +192,8 @@ for i in ou_codes:
 for i in p:
     ou_codes.remove(i)
 
-
-
+print(p)
+ou_codes
 """
 for loop , 对所有ou进行独立的kmeans on inb qty and outb qty
 随后merge 原始表
@@ -206,7 +211,7 @@ for i in ou_codes:
                 )
     )
 
-
+df_final.tail()
 
 # np.setdiff1d(ou_codes,df_final.ou_code.unique())
 df_final = df_final.merge(
@@ -215,7 +220,7 @@ df_final = df_final.merge(
     how = 'left'
     )
 
-
+df_final.head()
 df_final['max_wh'] = df_final.groupby(
     ['ou_code', 'kernal_core1', 'kernal_core2']
     )['total_working_hour'].transform('max')
@@ -254,12 +259,20 @@ df_final['percent_error_75'] = (
 
 df_final['inc_day'] = str(date.today())
 df_final['inc_day'] = df_final['inc_day'].str.replace('-', '')
-
-
+df_final.head(33)
+# df_final
 df = spark.createDataFrame(df_final)
+
+df.show(11, False)
+
 df.createOrReplaceTempView("df_final")
 
+df.show(15, False)
+
+# spark.sql(sql)
 sql ="""
+set hive.exec.dynamic.partition.mode=nonstrict;
+INSERT OVERWRITE TABLE dsc_dws.dws_qty_working_hour_labeling_sum_df partition (inc_day)
 select
 ou_code,
 operation_day,
@@ -289,10 +302,9 @@ percent_error_75,
 inc_day
 from df_final
 """
-
-df = spark.sql(sql)
-# table_name, df, pk_cols, order_cols, partition_cols=None):
-merge_data = MergeDFToTable(
-    "dsc_dws.dws_qty_working_hour_labeling_sum_df",
-    df, "ou_code, operation_day","ou_code, operation_day", "inc_day")
-merge_data.merge()
+spark.sql(sql).show()
+# # table_name, df, pk_cols, order_cols, partition_cols=None):
+# merge_data = MergeDFToTable(
+#     "dsc_dws.dws_qty_working_hour_labeling_sum_df",
+#     df, "ou_code, operation_day","ou_code, operation_day", "inc_day")
+# merge_data.merge()
