@@ -15,6 +15,7 @@ from pyspark.sql.functions import *
 from MergeDataFrameToTable import MergeDFToTable
 spark = SparkSession.builder.enableHiveSupport().getOrCreate()
 from datetime import date
+spark.conf.set('spark.sql.sources.partitionOverwriteMode', 'dynamic')
 """
 load data
 """
@@ -278,8 +279,12 @@ df = spark.sql("""select ou_code, cast(operation_day as string),inbound_receive_
 ,inc_day from df_final
 """)
 df.schema
-df.write.mode("overwrite").partitionBy(
+df.repartition("inc_day").write.mode("overwrite").partitionBy(
     "inc_day").parquet(
         "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
 
 # C:\Users\dscshap3808\Documents\my_scripts_new\play1\play1_script.py
+
+# df.write.mode("overwrite").parquet(
+# "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df/inc_day=" + str(date.today()).replace('-', '')
+
