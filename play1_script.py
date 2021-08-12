@@ -260,7 +260,7 @@ df_final['percent_error_75'] = (
 df_final['inc_day'] = str(date.today())
 df_final['inc_day'] = df_final['inc_day'].str.replace('-', '')
  
-
+# df_final['inc_day']  = '20210811'
 
 # df_final
 df = spark.createDataFrame(df_final)
@@ -281,4 +281,5 @@ df.schema
 df.write.mode("overwrite").partitionBy(
     "inc_day").parquet(
         "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
-        
+
+# C:\Users\dscshap3808\Documents\my_scripts_new\play1\play1_script.py
