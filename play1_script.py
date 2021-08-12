@@ -282,3 +282,4 @@ df.write.mode("overwrite").partitionBy(
     "inc_day").parquet(
         "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
         
+
