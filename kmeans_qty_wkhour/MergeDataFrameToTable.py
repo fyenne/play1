@@ -82,15 +82,15 @@ class MergeDFToTable:
         res = self.spark.sql(sql)
         res.show(1)
         # delete temp files
-        # cmd = "hdfs dfs -rm -r -f " + temp_loc
-        # args = shlex.split(cmd)
-        # new_env = os.environ.copy()
-        # p = subprocess.Popen(args, env=new_env)
-        # stdout, stderr = p.communicate()
-        # print("stdout:")
-        # print(stdout)
-        # print("stderr")
-        # print(stderr)
+        cmd = "hdfs dfs -rm -r -f " + temp_loc
+        args = shlex.split(cmd)
+        new_env = os.environ.copy()
+        p = subprocess.Popen(args, env=new_env)
+        stdout, stderr = p.communicate()
+        print("stdout:")
+        print(stdout)
+        print("stderr")
+        print(stderr)
 
 
 
