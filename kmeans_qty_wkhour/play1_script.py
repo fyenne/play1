@@ -25,9 +25,10 @@ df = spark.sql("""select *
 
  
 # df = pd.read_csv('./play1/daily_kpi_all_810.csv')
-df.show(15,False)
+# df.show(15,False)
+
 df = df.select("*").toPandas()
-print(df.head())
+# print(df.head())
 df.tail()
 
 """
@@ -69,8 +70,7 @@ df = df[df['total_working_hour'] != 0]
 df.head()
 """
 calculations functions def
-"""
-mnb_kmeans_in('CN-214')
+""" 
 
 def mnb_kmeans_in(ou_code):
         """
@@ -259,7 +259,9 @@ df_final['percent_error_75'] = (
 
 df_final['inc_day'] = str(date.today())
 df_final['inc_day'] = df_final['inc_day'].str.replace('-', '')
-df_final.head(33)
+ 
+
+
 # df_final
 df = spark.createDataFrame(df_final)
 
@@ -268,43 +270,15 @@ df.show(11, False)
 df.createOrReplaceTempView("df_final")
 
 df.show(15, False)
-
-# spark.sql(sql)
-sql ="""
-set hive.exec.dynamic.partition.mode=nonstrict;
-INSERT OVERWRITE TABLE dsc_dws.dws_qty_working_hour_labeling_sum_df partition (inc_day)
-select
-ou_code,
-operation_day,
-inbound_receive_qty,
-kernal_core1,
-kernal_value1,
-outbound_shipped_qty,
-kernal_core2,
-kernal_value2,
-total_working_hour,
-kernal_core3,
-kernal_value3,
-dis_core,
-outbound_inbound_qty_ratio,
-working_hour_per_head,
-total_head_count,
-is_holiday,
-max_wh,
-min_wh,
-median_wh,
-mean_wh,
-qt_66_wh,
-qt_75_wh,
-d_to_core_outer,
-percent_error_66,
-percent_error_75, 
-inc_day
-from df_final
-"""
-spark.sql(sql).show()
-# # table_name, df, pk_cols, order_cols, partition_cols=None):
-# merge_data = MergeDFToTable(
-#     "dsc_dws.dws_qty_working_hour_labeling_sum_df",
-#     df, "ou_code, operation_day","ou_code, operation_day", "inc_day")
-# merge_data.merge()
+df = spark.sql("""select ou_code, cast(operation_day as string),inbound_receive_qty
+,kernal_core1,kernal_value1,outbound_shipped_qty,kernal_core2,kernal_value2
+,total_working_hour,kernal_core3,kernal_value3,dis_core,outbound_inbound_qty_ratio
+,working_hour_per_head,total_head_count,is_holiday,max_wh,min_wh,median_wh
+,mean_wh,qt_66_wh,qt_75_wh,d_to_core_outer,percent_error_66,percent_error_75
+,inc_day from df_final
+""")
+df.schema
+df.write.mode("overwrite").partitionBy(
+    "inc_day").parquet(
+        "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
+        
