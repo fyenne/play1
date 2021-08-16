@@ -258,10 +258,10 @@ df_final['percent_error_75'] = (
         )
 
 
-df_final['inc_day'] = str(date.today())
-df_final['inc_day'] = df_final['inc_day'].str.replace('-', '')
+df_final['date_stamp'] = str(date.today())
+df_final['date_stamp'] = df_final['date_stamp'].str.replace('-', '')
  
-# df_final['inc_day']  = '20210811'
+df_final['inc_day']  = '99991231'
 
 # df_final
 df = spark.createDataFrame(df_final)
@@ -275,12 +275,17 @@ df = spark.sql("""select ou_code, cast(operation_day as string),inbound_receive_
 ,kernal_core1,kernal_value1,outbound_shipped_qty,kernal_core2,kernal_value2
 ,total_working_hour,kernal_core3,kernal_value3,dis_core,outbound_inbound_qty_ratio
 ,working_hour_per_head,total_head_count,is_holiday,max_wh,min_wh,median_wh
-,mean_wh,qt_66_wh,qt_75_wh,d_to_core_outer,percent_error_66,percent_error_75
+,mean_wh,qt_66_wh,qt_75_wh,d_to_core_outer,percent_error_66,percent_error_75,date_stamp
 ,inc_day from df_final
 """)
 df.schema
 df.repartition("inc_day").write.mode("overwrite").partitionBy(
     "inc_day").parquet(
         "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
-
+spark.sql("""msck repair table dsc_dws.dws_qty_working_hour_labeling_sum_df
+""")
 # C:\Users\dscshap3808\Documents\my_scripts_new\play1\play1_script.py
+
+# df.write.mode("overwrite").parquet(
+# "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df/inc_day=" + str(date.today()).replace('-', '')
+
