@@ -263,6 +263,12 @@ df_final['date_stamp'] = df_final['date_stamp'].str.replace('-', '')
  
 df_final['inc_day']  = '99991231'
 
+
+df_ou_bg = spark.sql("""select * 
+        from dsc_dws.dws_dsc_wh_ou_daily_kpi_sum""")
+df_ou_bg = df_ou_bg[['bg_code','bg_name_cn','ou_code','ou_name']]
+df_final = df_final.merge(df_ou_bg, on = 'ou_code', how = 'left')
+
 # df_final
 df = spark.createDataFrame(df_final)
 
