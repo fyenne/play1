@@ -264,10 +264,22 @@ df_final['date_stamp'] = df_final['date_stamp'].str.replace('-', '')
 df_final['inc_day']  = '99991231'
 
 
+"""
+add ou_name & bg_name
+"""
+
 df_ou_bg = spark.sql("""select * 
         from dsc_dws.dws_dsc_wh_ou_daily_kpi_sum""")
+        
+df_ou_bg = df_ou_bg.select("*").toPandas()
 df_ou_bg = df_ou_bg[['bg_code','bg_name_cn','ou_code','ou_name']]
 df_final = df_final.merge(df_ou_bg, on = 'ou_code', how = 'left')
+df_final = df_final.drop_duplicates()
+
+df_final['inc_day']  = '99991231'
+"""
+end
+"""
 
 # df_final
 df = spark.createDataFrame(df_final)
@@ -281,15 +293,23 @@ df = spark.sql("""select ou_code, cast(operation_day as string),inbound_receive_
 ,kernal_core1,kernal_value1,outbound_shipped_qty,kernal_core2,kernal_value2
 ,total_working_hour,kernal_core3,kernal_value3,dis_core,outbound_inbound_qty_ratio
 ,working_hour_per_head,total_head_count,is_holiday,max_wh,min_wh,median_wh
-,mean_wh,qt_66_wh,qt_75_wh,d_to_core_outer,percent_error_66,percent_error_75,date_stamp
-,inc_day from df_final
+,mean_wh,qt_66_wh,qt_75_wh,d_to_core_outer,percent_error_66,percent_error_75
+,date_stamp
+,bg_code,bg_name_cn,ou_name
+,inc_day 
+from df_final
 """)
 df.schema
+
 df.repartition("inc_day").write.mode("overwrite").partitionBy(
     "inc_day").parquet(
         "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
-spark.sql("""msck repair table dsc_dws.dws_qty_working_hour_labeling_sum_df
-""")
+spark.sql(
+    """msck repair table dsc_dws.dws_qty_working_hour_labeling_sum_df"""
+    )
+
+
+    
 # C:\Users\dscshap3808\Documents\my_scripts_new\play1\play1_script.py
 
 # df.write.mode("overwrite").parquet(
