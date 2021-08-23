@@ -78,7 +78,7 @@ def mnb_kmeans_in(ou_code):
         mini batch kmeans, inbound, outbound, working hour data.
         simple algorithm, adding cols {max, min, mean, median, 75 quantile, distance to kernal}
         """
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 4, random_state = 529)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 4, random_state = 5290403)
         """
         null data fill
         """
@@ -113,7 +113,7 @@ def mnb_kmeans_in(ou_code):
 
 
 def mnb_kmeans_out(ou_code):
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 4, random_state = 707)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 4, random_state = 5290403)
         df_fin = pd.DataFrame()
         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'outbound_shipped_qty']]        
         df_fin = df_fin.append(df_sub[df_sub['outbound_shipped_qty'] == 0])
@@ -138,7 +138,7 @@ def mnb_kmeans_out(ou_code):
         return df_fin
 
 def mnb_kmeans_hr(ou_code):
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 4, random_state = 5290707)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 4, random_state = 5290403)
         df_fin = pd.DataFrame()
         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'total_working_hour']]        
         df_fin = df_fin.append(df_sub[df_sub['total_working_hour'] == 0])
