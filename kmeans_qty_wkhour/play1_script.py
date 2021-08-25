@@ -306,8 +306,7 @@ df.repartition("inc_day").write.mode("overwrite").partitionBy(
         "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
 spark.sql(
     """
-    msck repair table dsc_dws.dws_qty_working_hour_labeling_sum_df;
-    alter table dsc_dws.dws_qty_working_hour_labeling_sum_df drop partition (inc_day='20210817')
+    msck repair table dsc_dws.dws_qty_working_hour_labeling_sum_df;alter table dsc_dws.dws_qty_working_hour_labeling_sum_df drop partition (inc_day='20210817');
     """
     )
 
