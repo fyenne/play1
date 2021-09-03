@@ -40,7 +40,7 @@ inb oub qty sum always nill,  will be removed.
 only keep rows where total working hour is not nill 
 """
 
-clean_df1 = (df.groupby('ou_code')['operation_day'].count() < 24).reset_index()
+clean_df1 = (df.groupby('ou_code')['operation_day'].count() < 2).reset_index()
 clean_df1.columns = ['ou_code', 'flag1']
 df = clean_df1.merge(df, on = 'ou_code', how = 'inner')
 df = df[df['flag1'] == False]
