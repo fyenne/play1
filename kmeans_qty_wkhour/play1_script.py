@@ -333,7 +333,7 @@ df_final['pe_75_os'] = (
         )
 
 df_final  = df_final.replace(float('inf'), 0)
-df_final['flag_75_wh'] = [1 if a > 2.5 else 0 for a in df_final['pe_75_os']]
+df_final['flag_75_wh'] = [1 if a > .25 else 0 for a in df_final['pe_75_os']]
 
 """
 ssr
