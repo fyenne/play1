@@ -25,7 +25,9 @@ df = spark.sql("""select *
         from dsc_dws.dws_dsc_wh_ou_daily_kpi_sum""")
 
  
-# df = pd.read_csv('./play1/daily_kpi_all_810.csv')
+df = pd.read_csv('./daily_ou_kpi.csv')
+re1 = re.compile(r'(?<=\.).+')
+df.columns = [re1.findall(i)[0] for i in list(df.columns.to_numpy())]
 # df.show(15,False)
 
 df = df.select("*").toPandas()
@@ -56,6 +58,15 @@ clean_df3 = (df.groupby('ou_code')[[
     'total_working_hour'
     ]].sum() == 0).reset_index()
 clean_df3 = clean_df3[clean_df3['total_working_hour'] == False]
+
+
+clean_df4 = (df.groupby('ou_code')[[
+    'outsource_working_hour'
+    ]].sum() == 0).reset_index()
+clean_df4 = clean_df4[clean_df4['outsource_working_hour'] == False]
+df = df[df['ou_code'].isin(clean_df4.ou_code)]
+df= df.reset_index()
+ 
 df = df[df['ou_code'].isin(clean_df3.ou_code)]
 df= df.reset_index()
 
@@ -78,7 +89,7 @@ def mnb_kmeans_in(ou_code):
         mini batch kmeans, inbound, outbound, working hour data.
         simple algorithm, adding cols {max, min, mean, median, 75 quantile, distance to kernal}
         """
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 4, random_state = 5290403)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 5, random_state = 5290403)
         """
         null data fill
         """
@@ -113,7 +124,7 @@ def mnb_kmeans_in(ou_code):
 
 
 def mnb_kmeans_out(ou_code):
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 4, random_state = 5290403)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 5, random_state = 5290403)
         df_fin = pd.DataFrame()
         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'outbound_shipped_qty']]        
         df_fin = df_fin.append(df_sub[df_sub['outbound_shipped_qty'] == 0])
@@ -138,7 +149,7 @@ def mnb_kmeans_out(ou_code):
         return df_fin
 
 def mnb_kmeans_hr(ou_code):
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 4, random_state = 5290403)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 5, random_state = 5290403)
         df_fin = pd.DataFrame()
         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'total_working_hour']]        
         df_fin = df_fin.append(df_sub[df_sub['total_working_hour'] == 0])
@@ -159,20 +170,6 @@ def mnb_kmeans_hr(ou_code):
                 cl_1, on = 'kernal_core3', how = 'inner'
                 )
         df_fin = df_fin.append(df_rec).reset_index().drop(['index'], axis = 1)
-
-        # df_fin['kind'] = 'working_hour'
-        # df_fin['max_wh']    = df_fin.groupby('kernal_core3')['total_working_hour'].transform('max')
-        # df_fin['min_wh']    = df_fin.groupby('kernal_core3')['total_working_hour'].transform('min')
-        # df_fin['median_wh'] = df_fin.groupby('kernal_core3')['total_working_hour'].transform('median')
-        # df_fin['mean_wh']   = df_fin.groupby('kernal_core3')['total_working_hour'].transform('mean')
-        # df_fin['qt_66_wh']  = df_fin.groupby('kernal_core3')['total_working_hour'].transform('quantile', .66)
-        # df_fin['qt_75_wh']  = df_fin.groupby('kernal_core3')['total_working_hour'].transform('quantile', .75)
-        """
-        组内kernal distance 
-        """
-        df_fin['dis_core']  = df_fin.groupby(
-                'kernal_core3', as_index = False, observed = True
-                )['total_working_hour','kernal_value3'].agg('diff', axis = 1).drop('total_working_hour', axis = 1).round(3)
         return df_fin
 
 
@@ -185,7 +182,7 @@ for i in ou_codes:
     try: 
         mnb_kmeans_in(i)
         mnb_kmeans_out(i)
-        # mnb_kmeans_hr(i)
+        mnb_kmeans_hr(i)
     except:
         p.append(i)
 
@@ -220,6 +217,67 @@ df_final = df_final.merge(
     on = ['ou_code', 'operation_day'],
     how = 'left'
     )
+
+
+
+"""
+add out resource part
+"""
+def mnb_kmeans_hr2(ou_code):
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 5, random_state = 5290403)
+        df_fin = pd.DataFrame()
+        df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'outsource_working_hour']]  
+        df_fin = df_fin.append(df_sub[df_sub['outsource_working_hour'] == 0])
+        df_fin['kernal_core4' ] = -1
+        df_fin['kernal_value4'] = 0
+        df_rec = df_sub[df_sub['outsource_working_hour'] != 0]
+ 
+        hist1 = alg1.fit(np.reshape(list(df_rec['outsource_working_hour']), (-1,1)))
+
+        df_rec['kernal_core4'] = hist1.labels_
+        cl_1 = pd.concat(
+                [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,5))], axis = 1
+                )
+        
+        cl_1.columns = ['kernal_value4', 'kernal_core4']
+
+        df_rec = df_rec.merge(
+                cl_1, on = 'kernal_core4', how = 'outer'
+                )
+        df_fin = df_fin.append(df_rec).reset_index().drop(['index'], axis = 1)
+        return df_fin
+
+
+ou_codes
+p = list()
+for i in ou_codes:
+    try: 
+        # mnb_kmeans_in(i)
+        # mnb_kmeans_out(i)
+        # mnb_kmeans_hr(i)
+        mnb_kmeans_hr2(i)
+    except:
+        
+        p.append(i)
+
+
+for i in p:
+    ou_codes.remove(i)
+ 
+
+df_final2 = pd.DataFrame()
+for i in ou_codes:
+        df_final2 = df_final2.append(
+            mnb_kmeans_hr2(i)
+        )
+
+df_final = df_final.merge(df_final2, on =  ['ou_code', 'operation_day'], how = 'left').fillna(0)
+
+
+
+"""
+add out resource part end 
+"""
 
 df_final.head()
 df_final['max_wh'] = df_final.groupby(
@@ -258,10 +316,25 @@ df_final['percent_error_75'] = (
         )
 
 
+
+df_final['pe_66_os'] = (
+        df_final['qt_66_wh'] - df_final['outsource_working_hour'])/(
+                df_final['outsource_working_hour']
+                )
+df_final['pe_75_os'] = (
+        df_final['qt_75_wh'] - df_final['outsource_working_hour']
+        )/(df_final['outsource_working_hour']
+        )
+
+
+df_final['flag_75_wh'] = [1 if a > 2.5 else 0 for a in df_final['percent_error_75']]
+
+
+
 df_final['date_stamp'] = str(date.today())
 df_final['date_stamp'] = df_final['date_stamp'].str.replace('-', '')
  
-df_final['inc_day']  = '99991231'
+# df_final['inc_day']  = '99991231'
 
 
 """
@@ -295,7 +368,9 @@ df = spark.sql("""select ou_code, cast(operation_day as string),inbound_receive_
 ,working_hour_per_head,total_head_count,is_holiday,max_wh,min_wh,median_wh
 ,mean_wh,qt_66_wh,qt_75_wh,d_to_core_outer,percent_error_66,percent_error_75
 ,date_stamp
-,bg_code,bg_name_cn,ou_name
+,bg_code,bg_name_cn,ou_name,
+kernal_core4,kernal_value4,
+pe_66_os, pe_75_os, flag_75_wh
 ,inc_day 
 from df_final
 """)
