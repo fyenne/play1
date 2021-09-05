@@ -352,12 +352,24 @@ df_final['qt_75_dis_core_os_outer'] = df_final.groupby(
     )['d_to_core_outer_os'].transform('quantile', .75)
 
 
-df_final['flag_75_wh'] = [1 if df_final['total_working_hour'][i]-1.2*np.abs(df_final['percent_error_75'][i])\
+df_final['flag_75_wh'] = [1 if df_final['total_working_hour'][i]\
+    -1.2*np.abs(df_final['percent_error_75'][i]) < 0
     else 0 for i in np.arange(0, len(df_final))]
 # df_final['flag_75_wh'] = [1 if df_final['dis_core_os'][i]>np.abs(df_final['qt_75_dis_core_os_outer'][i])\
 #      else 0 for i in np.arange(0, len(df_final))]
 
+
+
 df_final  = df_final.replace(float('inf'), 0) 
+
+ 
+diff_tt_kn = df_final[df_final['flag_75_wh'] == 1][['total_working_hour', 'kernal_value3']].diff(
+    axis = 1).drop('total_working_hour', axis = 1)
+diff_tt_kn = pd.concat([diff_tt_kn.rename({'kernal_value3' : 'dis_tt_kernel'}, axis = 1), \
+    df_final[df_final['flag_75_wh'] == 1]], axis = 1)[['dis_tt_kernel', 'ou_code', 'operation_day']]
+
+df_final = df_final.merge(diff_tt_kn, on = ['ou_code', 'operation_day'], how = 'left').fillna(0)
+
 
 """
 ssr
@@ -425,7 +437,8 @@ kernal_core4,kernal_value4,
 pe_66_os, pe_75_os, flag_75_wh,qt_75_os,
 inb_qty_std, outb_qty_std, os_wh_std,
 outsource_working_hour,dis_core_os,
-d_to_core_outer_os,qt_75_dis_core_os_inner,qt_75_dis_core_os_outer
+d_to_core_outer_os,qt_75_dis_core_os_inner,qt_75_dis_core_os_outer,
+dis_tt_kernel
 ,inc_day 
 from df_final
 """)
