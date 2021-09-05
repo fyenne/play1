@@ -218,7 +218,7 @@ df_final.tail()
 
 # np.setdiff1d(ou_codes,df_final.ou_code.unique())
 df_final = df_final.merge(
-    df[['ou_code','operation_day','outsource_working_hour','outbound_inbound_qty_ratio','working_hour_per_head','total_head_count','is_holiday']],
+    df[['ou_code','operation_day','outbound_inbound_qty_ratio','working_hour_per_head','total_head_count','is_holiday']],
     on = ['ou_code', 'operation_day'],
     how = 'left'
     )
@@ -351,8 +351,11 @@ df_final['qt_75_dis_core_os_outer'] = df_final.groupby(
     ['ou_code', 'kernal_core1', 'kernal_core2']
     )['d_to_core_outer_os'].transform('quantile', .75)
 
-df_final['flag_75_wh'] = [1 if df_final['dis_core_os'][i]>df_final['qt_75_dis_core_os_outer'][i]\
-     else 0 for i in np.arange(0, len(df_final))]
+
+df_final['flag_75_wh'] = [1 if df_final['total_working_hour'][i]-1.2*np.abs(df_final['percent_error_75'][i])\
+    else 0 for i in np.arange(0, len(df_final))]
+# df_final['flag_75_wh'] = [1 if df_final['dis_core_os'][i]>np.abs(df_final['qt_75_dis_core_os_outer'][i])\
+#      else 0 for i in np.arange(0, len(df_final))]
 
 df_final  = df_final.replace(float('inf'), 0) 
 
