@@ -171,8 +171,10 @@ def mnb_kmeans_hr(ou_code):
         组内kernal distance 
         """
         df_fin['dis_core']  = df_fin.groupby(
-                'kernal_core3', as_index = False, observed = True
-                )['total_working_hour','kernal_value3'].agg('diff', axis = 1).drop('total_working_hour', axis = 1).round(3)
+                'kernal_core3'
+                )['total_working_hour','kernal_value3'].diff(
+                    axis = 1
+                    ).drop('total_working_hour', axis = 1).round(3)
         return df_fin
 
 
@@ -216,7 +218,7 @@ df_final.tail()
 
 # np.setdiff1d(ou_codes,df_final.ou_code.unique())
 df_final = df_final.merge(
-    df[['ou_code','operation_day','outbound_inbound_qty_ratio','working_hour_per_head','total_head_count','is_holiday']],
+    df[['ou_code','operation_day','outsource_working_hour','outbound_inbound_qty_ratio','working_hour_per_head','total_head_count','is_holiday']],
     on = ['ou_code', 'operation_day'],
     how = 'left'
     )
@@ -248,6 +250,11 @@ def mnb_kmeans_hr2(ou_code):
                 cl_1, on = 'kernal_core4', how = 'outer'
                 )
         df_fin = df_fin.append(df_rec).reset_index().drop(['index'], axis = 1)
+        df_fin['dis_core_os']=df_fin.groupby(
+                'kernal_core4'
+                )['outsource_working_hour','kernal_value4'].diff(
+                        axis = 1
+                        ).drop('outsource_working_hour', axis = 1).round(3)
         return df_fin
 
 
@@ -302,9 +309,8 @@ df_final['qt_75_wh'] = df_final.groupby(
     ['ou_code', 'kernal_core1', 'kernal_core2']
     )['total_working_hour'].transform('quantile', .75)
 df_final['d_to_core_outer'] = df_final.groupby(
-        ['ou_code', 'kernal_core1', 'kernal_core2'], as_index = False
-                )['total_working_hour','kernal_value3'].agg(
-                    'diff', axis = 1
+        ['ou_code', 'kernal_core1', 'kernal_core2']
+                )['total_working_hour','kernal_value3'].diff(axis = 1
                     ).drop('total_working_hour', axis = 1).round(3)
 
 
@@ -332,8 +338,23 @@ df_final['pe_75_os'] = (
         )/(df_final['outsource_working_hour']
         )
 
-df_final  = df_final.replace(float('inf'), 0)
-df_final['flag_75_wh'] = [1 if a > .25 else 0 for a in df_final['pe_75_os']]
+df_final['d_to_core_outer_os'] = df_final.groupby(
+        ['ou_code', 'kernal_core1', 'kernal_core2'], as_index = False
+                )['outsource_working_hour','kernal_value4'].diff(axis = 1
+                    ).drop('outsource_working_hour', axis = 1).round(3)
+
+df_final['qt_75_dis_core_os_inner'] = df_final.groupby(
+    ['ou_code', 'kernal_core4']
+    )['dis_core_os'].transform('quantile', .75)
+
+df_final['qt_75_dis_core_os_outer'] = df_final.groupby(
+    ['ou_code', 'kernal_core1', 'kernal_core2']
+    )['d_to_core_outer_os'].transform('quantile', .75)
+
+df_final['flag_75_wh'] = [1 if df_final['dis_core_os'][i]>df_final['qt_75_dis_core_os_outer'][i]\
+     else 0 for i in np.arange(0, len(df_final))]
+
+df_final  = df_final.replace(float('inf'), 0) 
 
 """
 ssr
@@ -399,7 +420,9 @@ df = spark.sql("""select ou_code, cast(operation_day as string),inbound_receive_
 ,bg_code,bg_name_cn,ou_name,
 kernal_core4,kernal_value4,
 pe_66_os, pe_75_os, flag_75_wh,qt_75_os,
-inb_qty_std, outb_qty_std, os_wh_std
+inb_qty_std, outb_qty_std, os_wh_std,
+outsource_working_hour,dis_core_os,
+d_to_core_outer_os,qt_75_dis_core_os_inner,qt_75_dis_core_os_outer
 ,inc_day 
 from df_final
 """)
