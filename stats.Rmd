@@ -10,16 +10,14 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, message = F}
 library(tidyverse)
 library(lfe)
-
-```
-
-```{r}
+library(reshape2)
+ 
 getwd()
-df <- read_csv('../df_final_97.csv')
+df <- read_csv('./df_final_97.csv')
 ```
 
 ```{r}
-names(df)
+# names(df)
 t = {}
 for (i in names(df)){
   
@@ -30,11 +28,11 @@ names(df) = t
 ```
 
 ```{r}
-felm(total_working_hour~ inbound_receive_qty + outbound_shipped_qty  , data = df) %>% summary()
+felm(total_working_hour~ inbound_receive_qty  , data = df[df$ou_code == 'CN-300', ]) %>% summary()
 
-
-cor(df$total_working_hour, df$inbound_receive_qty,
-    df$outbound_shipped_qty)
+# 
+# cor(df$total_working_hour, df$inbound_receive_qty,
+#     df$outbound_shipped_qty)
 
 cor_in = {}
 for (i in unique(df$ou_code)){
@@ -51,8 +49,17 @@ for (i in unique(df$ou_code)){
 }
 
 
-data.frame(unique(df$ou_code), cor_in, cor_out) %>% 
-  write.csv('./cor_data_out.csv', fileEncoding  = 'utf-8')
+cor_sum = {}
+for (i in unique(df$ou_code)){
+  cor_sum = cor_sum %>% append(cor(
+    df[df$ou_code == i, ]$total_working_hour, 
+    (df[df$ou_code == i, ]$outbound_shipped_qty + 
+       df[df$ou_code == i, ]$inbound_receive_qty)))
+}
+
+
+cor_df = data.frame(unique(df$ou_code), cor_in, cor_out,cor_sum) 
+  # write.csv('./cor_data_out.csv', fileEncoding  = 'utf-8')
 
 cor_check = function(code){
   c(cor(df[df$ou_code == code,]$total_working_hour,
@@ -63,6 +70,31 @@ cor_check = function(code){
 ```
 
 ```{r}
-cor_check("CN-300")
+cor_check("CN-300")^2
+
+# corr square equals to regression R^2 when having intercept.
+```
+
+```{r, message = F}
+library(plotly)
+cor_df = cor_df %>% melt()
+
+p1 = ggplot(data = cor_df) + 
+  aes(x = value, group = variable, fill = variable)+
+  geom_histogram(position = 'dodge') + 
+  geom_vline(aes(xintercept = 0.273123), 
+             color = 'red', linetype = 'dashed') + 
+  geom_vline(aes(xintercept = 0.3785019 ), 
+             color = 'darkgreen', linetype = 'dotdash') ;ggplotly(p1)
+
+```
+
+```{r}
+# cor_df[cor_df$variable == 'cor_in', ]
+cor_df[cor_df$variable == 'cor_in', ]$value %>%
+  quantile(.75)
+
+cor_df[cor_df$variable == 'cor_out', ]$value %>%
+  quantile(.75)
 ```
 
