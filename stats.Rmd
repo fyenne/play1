@@ -1,0 +1,68 @@
+---
+title: '1'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = F}
+library(tidyverse)
+library(lfe)
+
+```
+
+```{r}
+getwd()
+df <- read_csv('../df_final_97.csv')
+```
+
+```{r}
+names(df)
+t = {}
+for (i in names(df)){
+  
+  t = append(t , gsub('\\w+\\.', '', i))
+}
+names(df) = t
+
+```
+
+```{r}
+felm(total_working_hour~ inbound_receive_qty + outbound_shipped_qty  , data = df) %>% summary()
+
+
+cor(df$total_working_hour, df$inbound_receive_qty,
+    df$outbound_shipped_qty)
+
+cor_in = {}
+for (i in unique(df$ou_code)){
+  cor_in = cor_in %>% append(cor(
+    df[df$ou_code == i, ]$total_working_hour, 
+    df[df$ou_code == i, ]$inbound_receive_qty))
+}
+
+cor_out = {}
+for (i in unique(df$ou_code)){
+  cor_out = cor_out %>% append(cor(
+    df[df$ou_code == i, ]$total_working_hour, 
+    df[df$ou_code == i, ]$outbound_shipped_qty))
+}
+
+
+data.frame(unique(df$ou_code), cor_in, cor_out) %>% 
+  write.csv('./cor_data_out.csv', fileEncoding  = 'utf-8')
+
+cor_check = function(code){
+  c(cor(df[df$ou_code == code,]$total_working_hour,
+      df[df$ou_code == code,]$inbound_receive_qty),
+      cor(df[df$ou_code == code,]$total_working_hour,
+      df[df$ou_code == code,]$outbound_shipped_qty)) 
+}
+```
+
+```{r}
+cor_check("CN-300")
+```
+
