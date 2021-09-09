@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn import cluster
 import os
 import re
+# from sklearn.metrics import davies_bouldin_score
 # import seaborn as sns
 os.getcwd()
 import warnings
@@ -69,10 +70,117 @@ df = df[[
 df = df.fillna(0)
 df = df[df['total_working_hour'] != 0]
 df.head()
-"""
-calculations functions def
-""" 
 
+
+"""
+calculations functions def automate
+""" 
+# # from sklearn.metrics import davies_bouldin_scores
+# daylen = int(df['operation_day'].nunique()/10)
+# def mnb_kmeans_in(ou_code):
+#         """
+#         mini batch kmeans, inbound, outbound, working hour data.
+#         simple algorithm, adding cols {max, min, mean, median, 75 quantile, distance to kernal}
+#         Calculate Davies Bouldin score
+#         from sklearn.metrics import davies_bouldin_score
+#         null data fill
+#         """
+
+#         df_fin = pd.DataFrame()
+#         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'inbound_receive_qty']]        
+#         df_fin = df_fin.append(df_sub[df_sub['inbound_receive_qty'] == 0])
+#         df_fin['kernal_core1' ] = -1
+#         df_fin['kernal_value1'] = 0
+#         df_rec = df_sub[df_sub['inbound_receive_qty'] != 0]      
+
+#         """
+#         auto choose kernel nums
+#         """
+#         scores = []
+#         for center in list(range(2,daylen)):
+#             kmeans = cluster.MiniBatchKMeans(n_clusters=center)
+#             model  = kmeans.fit_predict(
+#                         X = np.reshape(list(df_rec['inbound_receive_qty']), (-1,1))
+#                         )
+#             score  = davies_bouldin_score(
+#                         np.reshape(list(df_rec['inbound_receive_qty']), (-1,1)), model
+#                         )
+#             scores.append(score)
+
+#         center = np.argmin(scores)
+#         print(center)
+     
+#         """
+#         not null data training
+#         """
+    
+#         alg1 = cluster.MiniBatchKMeans(n_clusters = center, random_state = 5290403)
+#         hist1 = alg1.fit(np.reshape(list(df_rec['inbound_receive_qty']), (-1,1)))
+#         df_rec['kernal_core1'] = hist1.labels_
+#         cl_1 = pd.concat(
+#                 [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,center))], axis = 1
+#                 )
+        
+#         cl_1.columns = ['kernal_value1', 'kernal_core1']
+#         df_rec = df_rec.merge(
+#                 cl_1, on = 'kernal_core1', how = 'inner'
+#                 )
+        
+#         """
+#         merging
+#         """
+#         df_fin = df_fin.append(df_rec).reset_index().drop(['index'], axis = 1)
+
+#         # df_fin['kind'] = 'inbound'
+
+#         return df_fin
+
+
+
+# def mnb_kmeans_out(ou_code):
+        
+#         df_fin = pd.DataFrame()
+#         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'outbound_shipped_qty']]        
+#         df_fin = df_fin.append(df_sub[df_sub['outbound_shipped_qty'] == 0])
+#         df_fin['kernal_core2' ] = -1
+#         df_fin['kernal_value2'] = 0
+#         df_rec = df_sub[df_sub['outbound_shipped_qty'] != 0]
+
+#         scores = []
+#         for center in list(range(2,daylen)):
+#             kmeans = cluster.MiniBatchKMeans(n_clusters=center)
+#             model  = kmeans.fit_predict(
+#                         X = np.reshape(list(df_rec['outbound_shipped_qty']), (-1,1))
+#                         )
+#             score  = davies_bouldin_score(
+#                         np.reshape(list(df_rec['outbound_shipped_qty']), (-1,1)), model
+#                         )
+#             scores.append(score)
+
+#         center = np.argmin(scores)
+#         print(center)
+#         alg1 = cluster.MiniBatchKMeans(n_clusters = center, random_state = 5290403)
+#         hist1 = alg1.fit(np.reshape(list(df_rec['outbound_shipped_qty']), (-1,1)))
+
+#         df_rec['kernal_core2'] = hist1.labels_
+#         cl_1 = pd.concat(
+#                 [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,center))], axis = 1
+#                 )
+        
+#         cl_1.columns = ['kernal_value2', 'kernal_core2']
+
+#         df_rec = df_rec.merge(
+#                 cl_1, on = 'kernal_core2', how = 'inner'
+#                 )
+#         df_fin = df_fin.append(df_rec).reset_index().drop(['index'], axis = 1)
+#         # df_fin['kind'] = 'outbound'
+#         return df_fin
+
+ 
+"""
+calculations functions def 0
+""" 
+ 
 def mnb_kmeans_in(ou_code):
         """
         mini batch kmeans, inbound, outbound, working hour data.
@@ -136,6 +244,10 @@ def mnb_kmeans_out(ou_code):
         df_fin = df_fin.append(df_rec).reset_index().drop(['index'], axis = 1)
         # df_fin['kind'] = 'outbound'
         return df_fin
+
+"""
+calculations functions def 0
+""" 
 
 def mnb_kmeans_hr(ou_code):
         alg1 = cluster.MiniBatchKMeans(n_clusters = 5, random_state = 5290403)
@@ -226,7 +338,7 @@ df_final = df_final.merge(
 
 
 """
-add out resource part
+add outsource part
 """
 def mnb_kmeans_hr2(ou_code):
         alg1 = cluster.MiniBatchKMeans(n_clusters = 5, random_state = 5290403)
@@ -352,8 +464,11 @@ df_final['qt_75_dis_core_os_outer'] = df_final.groupby(
     )['d_to_core_outer_os'].transform('quantile', .75)
 
 
+"""
+工时异常以及额外工时标记.
+"""
 
-df_final['flag_75_wh'] =  df_final['total_working_hour'] -1.2*df_final['qt_75_wh']
+df_final['flag_75_wh'] =  df_final['outsource_working_hour'] -1.2*df_final['qt_75_os']
 df_final['flag_75_wh'] = [1 if a > 0 else 0 for a in df_final['flag_75_wh']]
 # df_final['flag_75_wh'] = [1 if df_final['total_working_hour'][i]\
 #     -1.2*np.abs(df_final['qt_75_wh'][i]) > 0
@@ -361,22 +476,22 @@ df_final['flag_75_wh'] = [1 if a > 0 else 0 for a in df_final['flag_75_wh']]
 # df_final['flag_75_wh'] = [1 if df_final['dis_core_os'][i]>np.abs(df_final['qt_75_dis_core_os_outer'][i])\
 #      else 0 for i in np.arange(0, len(df_final))]
 
-
+print("=================================0================================")
 
 df_final  = df_final.replace(float('inf'), 0) 
 
  
-diff_tt_kn = df_final[df_final['flag_75_wh'] == 1][['total_working_hour', 'qt_75_wh']].diff(
-    axis = 1).drop('total_working_hour', axis = 1)
+diff_tt_kn = df_final[df_final['flag_75_wh'] == 1][['outsource_working_hour', 'qt_75_os']].diff(
+    axis = 1).drop('outsource_working_hour', axis = 1)
 
-diff_tt_kn = pd.concat([diff_tt_kn.rename({'qt_75_wh' : 'dis_tt_kernel'}, axis = 1), \
+diff_tt_kn = pd.concat([diff_tt_kn.rename({'qt_75_os' : 'dis_tt_kernel'}, axis = 1), \
     df_final[df_final['flag_75_wh'] == 1]], axis = 1)[['dis_tt_kernel', 'ou_code', 'operation_day']]
 
 df_final = df_final.merge(diff_tt_kn, on = ['ou_code', 'operation_day'], how = 'left').fillna(0)
 df_final['dis_tt_kernel'] = np.abs(df_final['dis_tt_kernel'])
 
 """
-ssr
+ssr corr
 """
 std_table = df_final.groupby('ou_code').agg({
     'inbound_receive_qty': ['std'],
@@ -387,8 +502,32 @@ std_table = df_final.groupby('ou_code').agg({
 std_table.columns = ['ou_code', 'inb_qty_std', 'outb_qty_std', 'os_wh_std']
 
 df_final = df_final.merge(std_table, on = 'ou_code', how = 'left')
+
+
+def data_logs(df_final):
+    df_final['log_inb_qty'] = np.log2(df_final['inbound_receive_qty'])
+    df_final['log_outb_qty'] = np.log2(df_final['outbound_shipped_qty'])
+    df_final_copy = df_final[
+        df_final['log_inb_qty'] > -10000 & ~np.isnan(df_final['log_inb_qty'])]  
+    df_final_copy2 = df_final[
+        df_final['log_outb_qty'] > -10000 & ~np.isnan(df_final['log_outb_qty'])] 
+    in_boundary = df_final_copy.groupby('ou_code')['log_inb_qty'].agg(['mean', 'std']).reset_index()
+    ou_boundary = df_final_copy2.groupby('ou_code')['log_outb_qty'].agg(['mean', 'std']).reset_index()
+    in_boundary.columns = ['ou_code', 'mean_inb_log', 'std_inb_log']
+    ou_boundary.columns = ['ou_code', 'mean_oub_log', 'std_oub_log']
+    return in_boundary , ou_boundary
+
+in_boundary , ou_boundary = data_logs(df_final)
+df_final = df_final.merge(
+    in_boundary, on = 'ou_code', how = 'left').merge(
+    ou_boundary, on = 'ou_code', how = 'left')
+
+df_final  = df_final.replace(float('inf'), 0) 
+df_final['log_inb_qty'] = df_final['log_inb_qty'].astype(float)
+df_final['log_outb_qty'] = df_final['log_outb_qty'].astype(float)#log_inb_qty	log_outb_qty
+print("=================================1================================")
 """
-ssr
+ssr corr
 """
 
 
@@ -421,7 +560,7 @@ df_final['inc_day']  = '99991231'
 """
 end
 """
-
+print("=================================3================================")
 # df_final
 df = spark.createDataFrame(df_final)
 
@@ -442,7 +581,8 @@ pe_66_os, pe_75_os, flag_75_wh,qt_75_os,
 inb_qty_std, outb_qty_std, os_wh_std,
 outsource_working_hour,dis_core_os,
 d_to_core_outer_os,qt_75_dis_core_os_inner,qt_75_dis_core_os_outer,
-dis_tt_kernel
+dis_tt_kernel,
+log_inb_qty,log_outb_qty, mean_inb_log, std_inb_log, mean_oub_log, std_oub_log 
 ,inc_day 
 from df_final
 """)
