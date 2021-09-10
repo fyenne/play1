@@ -44,7 +44,7 @@ inb oub qty sum always nill,  will be removed.
 only keep rows where total working hour is not nill 
 """
 # clean_df0 :
-df = df[df['operation_day'] > '20210601'] 
+df = df[df['operation_day'] >= '20210609'] 
 
 
 clean_df1 = (df.groupby('ou_code')['operation_day'].count() < 2).reset_index()
@@ -497,15 +497,23 @@ print("=================================1================================")
 
 df_final  = df_final.replace(float('inf'), 0) 
 
- 
-diff_tt_kn = df_final[df_final['flag_75_wh'] == 1][['outsource_working_hour', 'qt_75_os']].diff(
-    axis = 1).drop('outsource_working_hour', axis = 1)
 
-diff_tt_kn = pd.concat([diff_tt_kn.rename({'qt_75_os' : 'dis_tt_kernel'}, axis = 1), \
-    df_final[df_final['flag_75_wh'] == 1]], axis = 1)[['dis_tt_kernel', 'ou_code', 'operation_day']]
 
-df_final = df_final.merge(diff_tt_kn, on = ['ou_code', 'operation_day'], how = 'left').fillna(0)
-df_final['dis_tt_kernel'] = np.abs(df_final['dis_tt_kernel'])
+df_final0 = df_final[df_final['flag_75_wh'] == 0] 
+df_final1 = df_final[df_final['flag_75_wh'] == 1] 
+df_final0['dis_tt_kernel'] = 0
+df_final1['dis_tt_kernel'] = np.abs(df_final1['outsource_working_hour']  - 1.2* df_final1['qt_75_os'] )
+
+
+df_final = pd.concat([df_final0, df_final1], axis = 0)
+
+print("1.2 is the final flag boundart")
+
+# diff_tt_kn = pd.concat([diff_tt_kn.rename({'qt_75_os' : 'dis_tt_kernel'}, axis = 1), \
+#     df_final[df_final['flag_75_wh'] == 1]], axis = 1)[['dis_tt_kernel', 'ou_code', 'operation_day']]
+
+# df_final = df_final.merge(diff_tt_kn, on = ['ou_code', 'operation_day'], how = 'left').fillna(0)
+
 
 """
 ssr corr

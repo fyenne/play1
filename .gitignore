@@ -2,3 +2,7 @@
 .Rproj.user
 *.csv
 *.pbix
+*.pptx
+*.RData
+*.Rhistory
+*.log
