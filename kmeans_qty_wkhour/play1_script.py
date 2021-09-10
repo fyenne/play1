@@ -43,6 +43,9 @@ inb oub qty sum always nill,  will be removed.
 # tt_workinghour always nill, will be removed. 
 only keep rows where total working hour is not nill 
 """
+# clean_df0 :
+df = df[df['operation_day'] > '20210601'] 
+
 
 clean_df1 = (df.groupby('ou_code')['operation_day'].count() < 2).reset_index()
 clean_df1.columns = ['ou_code', 'flag1']
@@ -191,7 +194,7 @@ def mnb_kmeans_in(ou_code):
         mini batch kmeans, inbound, outbound, working hour data.
         simple algorithm, adding cols {max, min, mean, median, 75 quantile, distance to kernal}
         """
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 5, random_state = 5290403)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 7, random_state = 5290403)
         """
         null data fill
         """
@@ -226,7 +229,7 @@ def mnb_kmeans_in(ou_code):
 
 
 def mnb_kmeans_out(ou_code):
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 5, random_state = 5290403)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 7, random_state = 5290403)
         df_fin = pd.DataFrame()
         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'outbound_shipped_qty']]        
         df_fin = df_fin.append(df_sub[df_sub['outbound_shipped_qty'] == 0])
@@ -255,7 +258,7 @@ calculations functions def 0
 """ 
 
 def mnb_kmeans_hr(ou_code):
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 5, random_state = 5290403)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 7, random_state = 5290403)
         df_fin = pd.DataFrame()
         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'total_working_hour']]        
         df_fin = df_fin.append(df_sub[df_sub['total_working_hour'] == 0])
@@ -339,14 +342,14 @@ df_final = df_final.merge(
     on = ['ou_code', 'operation_day'],
     how = 'left'
     )
-
+print("=================================calculate_1================================")
 
 
 """
 add outsource part
 """
 def mnb_kmeans_hr2(ou_code):
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 5, random_state = 5290403)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = 7, random_state = 5290403)
         df_fin = pd.DataFrame()
         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'outsource_working_hour']]  
         df_fin = df_fin.append(df_sub[df_sub['outsource_working_hour'] == 0])
@@ -401,7 +404,7 @@ for i in ou_codes:
 df_final = df_final.merge(df_final2, on =  ['ou_code', 'operation_day'], how = 'left').fillna(0)
 
 
-
+print("===================calculate_2, below is other calculate measures=========================")
 """
 add out resource part end 
 """
@@ -429,6 +432,15 @@ df_final['d_to_core_outer'] = df_final.groupby(
         ['ou_code', 'kernal_core1', 'kernal_core2']
                 )['total_working_hour','kernal_value3'].diff(axis = 1
                     ).drop('total_working_hour', axis = 1).round(3)
+
+
+# df_final.groupby(
+#     ['ou_code', 'kernal_core1', 'kernal_core2']
+#     ).agg({
+#         total_working_hour: ['max', 'min', 'median', 'mean']
+
+
+#     })
 
 
 
