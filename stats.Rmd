@@ -143,9 +143,10 @@ cor_df = merge(df[,c("ou_code", "ou_name")] %>% distinct(),cor_df,on = "ou_code"
 df
 df[, c("total_working_hour", "inbound_receive_qty", "outbound_shipped_qty")]
 
-
+library(RColorBrewer)
 cor(df[, c("total_working_hour", "inbound_receive_qty", "outbound_shipped_qty")]) %>%
-  corrplot.mixed( lower = 'shade', upper = 'pie', order = 'hclust')
+  corrplot.mixed( lower = 'shade', upper = 'pie', order = 'hclust',
+                  col = brewer.pal(n = 10, name = 'PRGn'))
   
 
 ```
