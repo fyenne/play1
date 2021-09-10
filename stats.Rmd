@@ -33,6 +33,7 @@ library(lfe)
 library(reshape2)
 library(flexdashboard)
 library(zoo)
+library(corrplot)
  
 getwd()
 df <- read_csv('./df_final_97.csv')
@@ -148,6 +149,19 @@ cor(df[, c("total_working_hour", "inbound_receive_qty", "outbound_shipped_qty")]
   
 
 ```
+
+```{r}
+pltdf = pivot_longer(df[c('ou_code', 'inbound_receive_qty', 'outbound_shipped_qty', 'outsource_working_hour' )],
+     cols  =  c('inbound_receive_qty', 'outbound_shipped_qty' ) )
+pltdf = pltdf[pltdf$outsource_working_hour != 0, ]
+# pltdf
+ggplot(pltdf) + aes(x = value, y = outsource_working_hour, 
+                    group = name,
+                    color = name
+                    ) + 
+  geom_point() +geom_smooth()
+```
+
 
 
 ```{r, include= FALSE}

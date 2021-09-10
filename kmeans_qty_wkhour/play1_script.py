@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 from sklearn import cluster
 import os
 import re
+import sklearn
 # from sklearn.metrics import davies_bouldin_score
 # import seaborn as sns
 os.getcwd()
 import warnings
 warnings.filterwarnings('ignore')
-
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from MergeDataFrameToTable import MergeDFToTable
@@ -28,6 +28,11 @@ df = spark.sql("""select *
 # df.show(15,False)
 
 df = df.select("*").toPandas()
+
+
+print("=================================0================================")
+print("Sklearn version here:", sklearn.__version__)
+print("=================================0================================")
 # print(df.head())
 df.tail()
 
@@ -476,7 +481,7 @@ df_final['flag_75_wh'] = [1 if a > 0 else 0 for a in df_final['flag_75_wh']]
 # df_final['flag_75_wh'] = [1 if df_final['dis_core_os'][i]>np.abs(df_final['qt_75_dis_core_os_outer'][i])\
 #      else 0 for i in np.arange(0, len(df_final))]
 
-print("=================================0================================")
+print("=================================1================================")
 
 df_final  = df_final.replace(float('inf'), 0) 
 
@@ -525,7 +530,7 @@ df_final = df_final.merge(
 df_final  = df_final.replace(float('inf'), 0) 
 df_final['log_inb_qty'] = df_final['log_inb_qty'].astype(float)
 df_final['log_outb_qty'] = df_final['log_outb_qty'].astype(float)#log_inb_qty	log_outb_qty
-print("=================================1================================")
+print("=================================2================================")
 """
 ssr corr
 """
