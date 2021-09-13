@@ -410,48 +410,71 @@ add out resource part end
 """
 
 df_final.head()
-df_final['max_wh'] = df_final.groupby(
-    ['ou_code', 'kernal_core1', 'kernal_core2']
-    )['total_working_hour'].transform('max')
-df_final['min_wh'] = df_final.groupby(
-    ['ou_code', 'kernal_core1', 'kernal_core2']
-    )['total_working_hour'].transform('min')
-df_final['median_wh'] = df_final.groupby(
-    ['ou_code', 'kernal_core1', 'kernal_core2']
-    )['total_working_hour'].transform('median')
-df_final['mean_wh'] = df_final.groupby(
-    ['ou_code', 'kernal_core1', 'kernal_core2']
-    )['total_working_hour'].transform('mean')
-df_final['qt_66_wh'] = df_final.groupby(
-    ['ou_code', 'kernal_core1', 'kernal_core2']
-    )['total_working_hour'].transform('quantile', .6667)
-df_final['qt_75_wh'] = df_final.groupby(
-    ['ou_code', 'kernal_core1', 'kernal_core2']
-    )['total_working_hour'].transform('quantile', .75)
-df_final['d_to_core_outer'] = df_final.groupby(
-        ['ou_code', 'kernal_core1', 'kernal_core2']
-                )['total_working_hour','kernal_value3'].diff(axis = 1
-                    ).drop('total_working_hour', axis = 1).round(3)
-
-
-# df_final.groupby(
+# df_final['max_wh'] = df_final.groupby(
 #     ['ou_code', 'kernal_core1', 'kernal_core2']
-#     ).agg({
-#         total_working_hour: ['max', 'min', 'median', 'mean']
+#     )['total_working_hour'].transform('max')
+# df_final['min_wh'] = df_final.groupby(
+#     ['ou_code', 'kernal_core1', 'kernal_core2']
+#     )['total_working_hour'].transform('min')
+# df_final['median_wh'] = df_final.groupby(
+#     ['ou_code', 'kernal_core1', 'kernal_core2']
+#     )['total_working_hour'].transform('median')
+# df_final['mean_wh'] = df_final.groupby(
+#     ['ou_code', 'kernal_core1', 'kernal_core2']
+#     )['total_working_hour'].transform('mean')
+# df_final['qt_66_wh'] = df_final.groupby(
+#     ['ou_code', 'kernal_core1', 'kernal_core2']
+#     )['total_working_hour'].transform('quantile', .6667)
+# df_final['qt_75_wh'] = df_final.groupby(
+#     ['ou_code', 'kernal_core1', 'kernal_core2']
+#     )['total_working_hour'].transform('quantile', .75)
+# df_final['d_to_core_outer'] = df_final.groupby(
+#         ['ou_code', 'kernal_core1', 'kernal_core2']
+#                 )['total_working_hour','kernal_value3'].diff(axis = 1
+#                     ).drop('total_working_hour', axis = 1).round(3)
+                    
+# df_final['percent_error_66'] = (
+#         df_final['qt_66_wh'] - df_final['total_working_hour'])/(
+#                 df_final['total_working_hour']
+#                 )
+# df_final['percent_error_75'] = (
+#         df_final['qt_75_wh'] - df_final['total_working_hour']
+#         )/(df_final['total_working_hour']
+#         )
 
 
-#     })
+#     return percentile_
+def cals_cunc(df):
+    cals = df.groupby(
+        ['ou_code', 'kernal_core1', 'kernal_core2']
+        ).agg({
+            'total_working_hour': ['max', 'min', 'median', 'mean', \
+                lambda a: a.quantile(.6667), 
+                lambda b: b.quantile(.75)]
+        }).reset_index()
+
+    cals.columns = ['ou_code','kernal_core1','kernal_core2',\
+        'max_wh','min_wh','median_wh','mean_wh','qt_66_wh','qt_75_wh']
+
+    return cals
+cals = cals_cunc(df_final)
+df_final = df_final.merge(cals, on = ['ou_code', 'kernal_core1', 'kernal_core2'], how = 'left')
+
+def mutate_cals(df_final): 
+    df_final['d_to_core_outer'] = np.abs(df_final['total_working_hour'] - df_final['kernal_value3']).round(3)
+    df_final['d_to_core_outer_os'] = np.abs(df_final['outsource_working_hour'] - df_final['kernal_value4']).round(3)
+    df_final['percent_error_66'] = (df_final['qt_66_wh'] - df_final['total_working_hour'])\
+        /(df_final['total_working_hour'])
+    df_final['percent_error_75'] = (df_final['qt_75_wh'] - df_final['total_working_hour'])\
+        /(df_final['total_working_hour'])
+
+    
+    return df_final
+
+df_final = mutate_cals(df_final)
 
 
 
-df_final['percent_error_66'] = (
-        df_final['qt_66_wh'] - df_final['total_working_hour'])/(
-                df_final['total_working_hour']
-                )
-df_final['percent_error_75'] = (
-        df_final['qt_75_wh'] - df_final['total_working_hour']
-        )/(df_final['total_working_hour']
-        )
 
 
 df_final['qt_75_os'] = df_final.groupby(
@@ -459,18 +482,14 @@ df_final['qt_75_os'] = df_final.groupby(
     )['outsource_working_hour'].transform('quantile', .75)
 
 df_final['pe_66_os'] = (
-        df_final['qt_66_wh'] - df_final['outsource_working_hour'])/(
+        df_final['qt_75_os'] - df_final['outsource_working_hour'])/(
                 df_final['outsource_working_hour']
                 )
 df_final['pe_75_os'] = (
-        df_final['qt_75_wh'] - df_final['outsource_working_hour']
+        df_final['qt_75_os'] - df_final['outsource_working_hour']
         )/(df_final['outsource_working_hour']
         )
-
-df_final['d_to_core_outer_os'] = df_final.groupby(
-        ['ou_code', 'kernal_core1', 'kernal_core2'], as_index = False
-                )['outsource_working_hour','kernal_value4'].diff(axis = 1
-                    ).drop('outsource_working_hour', axis = 1).round(3)
+ 
 
 df_final['qt_75_dis_core_os_inner'] = df_final.groupby(
     ['ou_code', 'kernal_core4']
@@ -485,7 +504,11 @@ df_final['qt_75_dis_core_os_outer'] = df_final.groupby(
 工时异常以及额外工时标记.
 """
 
-df_final['flag_75_wh'] =  df_final['outsource_working_hour'] -1.2*df_final['qt_75_os']
+df_final['flag_75_os'] =  df_final['outsource_working_hour'] -1.2*df_final['qt_75_os']
+df_final['flag_75_os'] = [1 if a > 0 else 0 for a in df_final['flag_75_os']]
+
+
+df_final['flag_75_wh'] =  df_final['total_working_hour'] -1.2*df_final['qt_75_wh']
 df_final['flag_75_wh'] = [1 if a > 0 else 0 for a in df_final['flag_75_wh']]
 # df_final['flag_75_wh'] = [1 if df_final['total_working_hour'][i]\
 #     -1.2*np.abs(df_final['qt_75_wh'][i]) > 0
@@ -502,12 +525,22 @@ df_final  = df_final.replace(float('inf'), 0)
 df_final0 = df_final[df_final['flag_75_wh'] == 0] 
 df_final1 = df_final[df_final['flag_75_wh'] == 1] 
 df_final0['dis_tt_kernel'] = 0
-df_final1['dis_tt_kernel'] = np.abs(df_final1['outsource_working_hour']  - 1.2* df_final1['qt_75_os'] )
+df_final1['dis_tt_kernel'] = np.abs(df_final1['total_working_hour']  - 1.2* df_final1['qt_75_wh'] )
 
 
 df_final = pd.concat([df_final0, df_final1], axis = 0)
 
-print("1.2 is the final flag boundart")
+print("1.2 is the final flag boundary")
+
+df_final0 = df_final[df_final['flag_75_os'] == 0] 
+df_final1 = df_final[df_final['flag_75_os'] == 1] 
+df_final0['dis_os_kernel'] = 0
+df_final1['dis_os_kernel'] = np.abs(df_final1['outsource_working_hour']  - 1.2* df_final1['qt_75_os'] )
+
+
+df_final = pd.concat([df_final0, df_final1], axis = 0)
+
+print("1.2 is the os flag boundary")
 
 # diff_tt_kn = pd.concat([diff_tt_kn.rename({'qt_75_os' : 'dis_tt_kernel'}, axis = 1), \
 #     df_final[df_final['flag_75_wh'] == 1]], axis = 1)[['dis_tt_kernel', 'ou_code', 'operation_day']]
@@ -608,6 +641,7 @@ outsource_working_hour,dis_core_os,
 d_to_core_outer_os,qt_75_dis_core_os_inner,qt_75_dis_core_os_outer,
 dis_tt_kernel,
 log_inb_qty,log_outb_qty, mean_inb_log, std_inb_log, mean_oub_log, std_oub_log 
+,flag_75_os, dis_os_kernel
 ,inc_day 
 from df_final
 """)
