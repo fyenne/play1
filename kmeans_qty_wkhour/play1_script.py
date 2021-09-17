@@ -33,11 +33,12 @@ df = df.select("*").toPandas()
 """
 test local
 """
-link = r'C:\Users\dscshap3808\Documents\my_scripts_new\play1\daily_ou_kpi.csv'
-df = pd.read_csv(link)
-df.head()
-re1 = re.compile(r'(?<=\.).+')
-df.columns = [re1.findall(i)[0] for i in list(df.columns.to_numpy())]
+
+# link = r'C:\Users\dscshap3808\Documents\my_scripts_new\play1\daily_ou_kpi.csv'
+# df = pd.read_csv(link)
+# df.head()
+# re1 = re.compile(r'(?<=\.).+')
+# df.columns = [re1.findall(i)[0] for i in list(df.columns.to_numpy())]
  
 
 """
@@ -58,6 +59,7 @@ inb oub qty sum always nill,  will be removed.
 only keep rows where total working hour is not nill 
 """
 # clean_df0 :
+df['operation_day'] = df['operation_day'].apply(int)
 df = df[df['operation_day'] >= 20210601] 
 
 
@@ -91,7 +93,7 @@ df = df[[
     'working_hour_per_head', 'location_usage_rate', 'location_idle_rate']]
 df = df.fillna(0)
 df = df[df['total_working_hour'] != 0]
-df.head()
+ 
 view = df[df['ou_code'] == 'CN-066'].sort_values('operation_day')
 view['operation_day'].head(40)
 
