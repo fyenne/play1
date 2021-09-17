@@ -6,6 +6,7 @@ from sklearn import cluster
 import os
 import re
 import sklearn
+from datetime import date
 # from sklearn.metrics import davies_bouldin_score
 # import seaborn as sns
 os.getcwd()
@@ -15,7 +16,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from MergeDataFrameToTable import MergeDFToTable
 spark = SparkSession.builder.enableHiveSupport().getOrCreate()
-from datetime import date
+
 spark.conf.set('spark.sql.sources.partitionOverwriteMode', 'dynamic')
 """
 load data
@@ -29,6 +30,19 @@ df = spark.sql("""select *
 
 df = df.select("*").toPandas()
 
+"""
+test local
+"""
+link = r'C:\Users\dscshap3808\Documents\my_scripts_new\play1\daily_ou_kpi.csv'
+df = pd.read_csv(link)
+df.head()
+re1 = re.compile(r'(?<=\.).+')
+df.columns = [re1.findall(i)[0] for i in list(df.columns.to_numpy())]
+ 
+
+"""
+test local end
+"""
 
 print("=================================0================================")
 print("Sklearn version here:", sklearn.__version__)
@@ -44,7 +58,7 @@ inb oub qty sum always nill,  will be removed.
 only keep rows where total working hour is not nill 
 """
 # clean_df0 :
-df = df[df['operation_day'] >= '20210609'] 
+df = df[df['operation_day'] >= 20210601] 
 
 
 # clean_df1 = (df.groupby('ou_code')['operation_day'].count() < 2).reset_index()
@@ -78,7 +92,8 @@ df = df[[
 df = df.fillna(0)
 df = df[df['total_working_hour'] != 0]
 df.head()
-
+view = df[df['ou_code'] == 'CN-066'].sort_values('operation_day')
+view['operation_day'].head(40)
 
 """
 calculations functions def automate
@@ -188,13 +203,14 @@ calculations functions def automate
 """
 calculations functions def 0
 """ 
- 
+nc = 7
 def mnb_kmeans_in(ou_code):
         """
         mini batch kmeans, inbound, outbound, working hour data.
         simple algorithm, adding cols {max, min, mean, median, 75 quantile, distance to kernal}
         """
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 7, random_state = 5290403)
+        
+        alg1 = cluster.MiniBatchKMeans(n_clusters = nc, random_state = 5290403)
         """
         null data fill
         """
@@ -210,7 +226,7 @@ def mnb_kmeans_in(ou_code):
         hist1 = alg1.fit(np.reshape(list(df_rec['inbound_receive_qty']), (-1,1)))
         df_rec['kernal_core1'] = hist1.labels_
         cl_1 = pd.concat(
-                [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,5))], axis = 1
+                [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,nc))], axis = 1
                 )
         
         cl_1.columns = ['kernal_value1', 'kernal_core1']
@@ -229,7 +245,7 @@ def mnb_kmeans_in(ou_code):
 
 
 def mnb_kmeans_out(ou_code):
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 7, random_state = 5290403)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = nc, random_state = 5290403)
         df_fin = pd.DataFrame()
         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'outbound_shipped_qty']]        
         df_fin = df_fin.append(df_sub[df_sub['outbound_shipped_qty'] == 0])
@@ -241,7 +257,7 @@ def mnb_kmeans_out(ou_code):
 
         df_rec['kernal_core2'] = hist1.labels_
         cl_1 = pd.concat(
-                [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,5))], axis = 1
+                [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,nc))], axis = 1
                 )
         
         cl_1.columns = ['kernal_value2', 'kernal_core2']
@@ -258,7 +274,7 @@ calculations functions def 0
 """ 
 
 def mnb_kmeans_hr(ou_code):
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 7, random_state = 5290403)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = nc, random_state = 5290403)
         df_fin = pd.DataFrame()
         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'total_working_hour']]        
         df_fin = df_fin.append(df_sub[df_sub['total_working_hour'] == 0])
@@ -270,7 +286,7 @@ def mnb_kmeans_hr(ou_code):
 
         df_rec['kernal_core3'] = hist1.labels_
         cl_1 = pd.concat(
-                [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,5))], axis = 1
+                [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,nc))], axis = 1
                 )
         
         cl_1.columns = ['kernal_value3', 'kernal_core3']
@@ -301,6 +317,7 @@ def mnb_kmeans_hr(ou_code):
 """
 remove OUs which can not be calculate due to deficiency of data length.
 """
+
 ou_codes = list(df['ou_code'].unique())
 p = list()
 for i in ou_codes:
@@ -343,13 +360,15 @@ df_final = df_final.merge(
     how = 'left'
     )
 print("=================================calculate_1================================")
-
+ 
+view = df_final[df_final['ou_code'] == 'CN-066'].sort_values('operation_day')
+view['operation_day'].head(40)
 
 """
 add outsource part
 """
 def mnb_kmeans_hr2(ou_code):
-        alg1 = cluster.MiniBatchKMeans(n_clusters = 7, random_state = 5290403)
+        alg1 = cluster.MiniBatchKMeans(n_clusters = nc, random_state = 5290403)
         df_fin = pd.DataFrame()
         df_sub = df[df['ou_code'] == ou_code][['ou_code', 'operation_day', 'outsource_working_hour']]  
         df_fin = df_fin.append(df_sub[df_sub['outsource_working_hour'] == 0])
@@ -361,7 +380,7 @@ def mnb_kmeans_hr2(ou_code):
 
         df_rec['kernal_core4'] = hist1.labels_
         cl_1 = pd.concat(
-                [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,5))], axis = 1
+                [pd.DataFrame(hist1.cluster_centers_), pd.Series(np.arange(0,nc))], axis = 1
                 )
         
         cl_1.columns = ['kernal_value4', 'kernal_core4']
