@@ -47,10 +47,10 @@ only keep rows where total working hour is not nill
 df = df[df['operation_day'] >= '20210609'] 
 
 
-clean_df1 = (df.groupby('ou_code')['operation_day'].count() < 2).reset_index()
-clean_df1.columns = ['ou_code', 'flag1']
-df = clean_df1.merge(df, on = 'ou_code', how = 'inner')
-df = df[df['flag1'] == False]
+# clean_df1 = (df.groupby('ou_code')['operation_day'].count() < 2).reset_index()
+# clean_df1.columns = ['ou_code', 'flag1']
+# df = clean_df1.merge(df, on = 'ou_code', how = 'inner')
+# df = df[df['flag1'] == False]
 
 clean_df2 = df.groupby('ou_code')[[
     'inbound_receive_qty', 'outbound_shipped_qty'
@@ -584,7 +584,7 @@ df_final['log_inb_qty'] = df_final['log_inb_qty'].astype(float)
 df_final['log_outb_qty'] = df_final['log_outb_qty'].astype(float)#log_inb_qty	log_outb_qty
 print("=================================2================================")
 """
-ssr corr
+ssr corr done
 """
 
 
