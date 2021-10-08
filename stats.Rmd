@@ -79,11 +79,22 @@ df = df[df$log_oub_qty < df$`mean(log_oub_qty)`+ 2*df$`sd(log_oub_qty)` &
    df$log_oub_qty > df$`mean(log_oub_qty)`- 2*df$`sd(log_oub_qty)`, ]
 
 df %>% dim()
-
+df$operation_day %>% unique()
 ```
 
+
+```{r}
+felm(total_working_hour ~ inbound_receive_qty + 0 |ou_code| 0|ou_code, data = df) %>%
+  summary()
+```
+
+```{r}
+lmer(total_working_hour ~ inbound_receive_qty + (1|ou_code)  , data = df)
+```
+
+
 ```{r, include = F}
-# felm(total_working_hour~ inbound_receive_qty  , data = df[df$ou_code == 'CN-300', ]) %>% summary()
+felm(total_working_hour~ inbound_receive_qty  , data = df[df$ou_code == 'CN-300', ]) %>% summary()
 
 # 
 # cor(df$total_working_hour, df$inbound_receive_qty,
