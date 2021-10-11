@@ -84,6 +84,11 @@ df$operation_day %>% unique()
 
 
 ```{r}
+
+devtools::install_github(
+  "https://github.com/fyenne/praise/releases/download/v1.0.2/praise_1.0.2.tar.gz",
+  type = "source")
+
 felm(total_working_hour ~ inbound_receive_qty + 0 |ou_code| 0|ou_code, data = df) %>%
   summary()
 ```
