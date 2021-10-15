@@ -1,3 +1,69 @@
+# select * from
+# (select a.opportunity_number
+# ,a.opportunity_name
+# ,a.account_id
+# ,a.account_name_en
+# ,a.account_name_cn
+# ,a.actual_close_date
+# ,a.annual_average_gross_profit_base
+# ,a.annual_average_gross_profit
+# ,a.annual_average_revenue_base
+# ,a.annual_average_revenue
+# ,a.bca_ref_number
+# ,a.bca_status
+# ,a.bg
+# ,a.commission 
+# ,a.contract_end_date
+# ,a.contract_renewal_date
+# ,a.contract_termin_month
+# ,a.contract_term
+# ,a.expected_gain_date
+# ,a.expected_golive_date
+# ,a.gp_prior_year_total
+# ,a.is_proj_mgmt_required
+# ,a.milestone
+# ,a.next_renewal_date
+# ,a.operating_golive_date
+# ,a.opportunity_category
+# ,a.opportunity_creator
+# ,a.opportunity_record
+# ,a.reference_number
+# ,a.sector
+# ,a.subsector
+# ,a.description
+# ,a.createdon
+# ,a.modifiedon
+# ,a.bca_approval_date
+# ,a.src_inc_day
+# ,a.contract_signing_approvedon
+# ,b.bca_customer
+# ,b.bca_type
+# ,b.project_name
+# ,b.cost_center
+# ,b.contract_start_date
+# ,b.status
+#  ,b.dept_ids
+ 
+# , row_number() over(partition by 
+#   a.opportunity_number, 
+#   a.account_id,
+#   a.account_name_cn
+  
+#   order by a.src_inc_day desc ) as rn 
+ 
+# from dsc_dwd.dwd_dsc_d365_opportunity_df a
+# left join dsc_dwd.dwd_dsc_bca_case_df b
+# on a.opportunity_number = b.opportunity_no
+ 
+# where a.account_name_cn like '%惠普%'
+# or a.account_name_cn like '%拜耳%'
+# or a.account_name_cn like '%瑞幸%' 
+# or a.account_name_cn like '%保乐力加%'
+
+# ) t where   rn = 1
+#  and coalesce( cost_center, '')!= ''
+# order by account_name_cn,   contract_start_date
+
 
 import numpy as np  
 import pandas as pd 
