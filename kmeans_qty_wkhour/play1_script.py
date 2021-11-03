@@ -74,12 +74,13 @@ clean_df2 = df.groupby('ou_code')[[
 clean_df2['sum'] = clean_df2.sum(axis = 1)
 clean_df2 = clean_df2[clean_df2['sum'] != 0]
 df = df[df['ou_code'].isin(clean_df2.ou_code)]
+# total in_out sum == 0 / excluded
 
 clean_df3 = (df.groupby('ou_code')[[
     'total_working_hour'
     ]].sum() == 0).reset_index()
 clean_df3 = clean_df3[clean_df3['total_working_hour'] == False]
-
+# total working hour sum == 0 / excluded
  
 df = df[df['ou_code'].isin(clean_df3.ou_code)]
 df= df.reset_index()
