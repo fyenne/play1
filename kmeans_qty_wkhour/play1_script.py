@@ -6,7 +6,7 @@ from sklearn import cluster
 import os
 import re
 import sklearn
-from datetime import date
+from datetime import date, datetime
 # from sklearn.metrics import davies_bouldin_score
 # import seaborn as sns
 os.getcwd()
@@ -46,7 +46,9 @@ test local end
 """
 
 print("=================================0================================")
-print("Sklearn version here:", sklearn.__version__)
+print("Sklearn version here:", sklearn.__version__, '\t')
+import sys 
+print("python version here:", sys.version, '\t') 
 print("=================================0================================")
 # print(df.head())
 df.tail()
@@ -62,25 +64,17 @@ only keep rows where total working hour is not nill
 df['operation_day'] = df['operation_day'].apply(int)
 df = df[df['operation_day'] >= 20210601] 
 
-
-# clean_df1 = (df.groupby('ou_code')['operation_day'].count() < 2).reset_index()
-# clean_df1.columns = ['ou_code', 'flag1']
-# df = clean_df1.merge(df, on = 'ou_code', how = 'inner')
-# df = df[df['flag1'] == False]
-
 clean_df2 = df.groupby('ou_code')[[
     'inbound_receive_qty', 'outbound_shipped_qty'
     ]].sum().reset_index()
 clean_df2['sum'] = clean_df2.sum(axis = 1)
 clean_df2 = clean_df2[clean_df2['sum'] != 0]
-df = df[df['ou_code'].isin(clean_df2.ou_code)]
-# total in_out sum == 0 / excluded
+df = df[df['ou_code'].isin(clean_df2.ou_code)] 
 
 clean_df3 = (df.groupby('ou_code')[[
     'total_working_hour'
     ]].sum() == 0).reset_index()
 clean_df3 = clean_df3[clean_df3['total_working_hour'] == False]
-# total working hour sum == 0 / excluded
  
 df = df[df['ou_code'].isin(clean_df3.ou_code)]
 df= df.reset_index()
@@ -99,7 +93,7 @@ view = df[df['ou_code'] == 'CN-066'].sort_values('operation_day')
 view['operation_day'].head(40)
 
 """
-calculations functions def automate
+calculations functions def auto  
 """ 
 # # from sklearn.metrics import davies_bouldin_scores
 # daylen = int(df['operation_day'].nunique()/10)
@@ -205,8 +199,10 @@ calculations functions def automate
  
 """
 calculations functions def 0
-""" 
-nc = 7
+"""  
+
+nc = int((datetime.now() - datetime(2021, 6, 1)).days/30) + 2
+
 def mnb_kmeans_in(ou_code):
         """
         mini batch kmeans, inbound, outbound, working hour data.
@@ -298,14 +294,6 @@ def mnb_kmeans_hr(ou_code):
                 cl_1, on = 'kernal_core3', how = 'inner'
                 )
         df_fin = df_fin.append(df_rec).reset_index().drop(['index'], axis = 1)
-
-        # df_fin['kind'] = 'working_hour'
-        # df_fin['max_wh']    = df_fin.groupby('kernal_core3')['total_working_hour'].transform('max')
-        # df_fin['min_wh']    = df_fin.groupby('kernal_core3')['total_working_hour'].transform('min')
-        # df_fin['median_wh'] = df_fin.groupby('kernal_core3')['total_working_hour'].transform('median')
-        # df_fin['mean_wh']   = df_fin.groupby('kernal_core3')['total_working_hour'].transform('mean')
-        # df_fin['qt_66_wh']  = df_fin.groupby('kernal_core3')['total_working_hour'].transform('quantile', .66)
-        # df_fin['qt_75_wh']  = df_fin.groupby('kernal_core3')['total_working_hour'].transform('quantile', .75)
         """
         组内kernal distance 
         """
@@ -404,12 +392,8 @@ ou_codes
 p = list()
 for i in ou_codes:
     try: 
-        # mnb_kmeans_in(i)
-        # mnb_kmeans_out(i)
-        # mnb_kmeans_hr(i)
         mnb_kmeans_hr2(i)
     except:
-        
         p.append(i)
 
 
