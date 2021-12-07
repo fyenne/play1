@@ -57,7 +57,7 @@ df.tail()
 clean data,
 operation day less than 24 days in two months will be removed.
 inb oub qty sum always nill,  will be removed.
-# tt_workinghour always nill, will be removed. 
+tt_workinghour always nill, will be removed. 
 only keep rows where total working hour is not nill 
 """
 # clean_df0 :
@@ -324,7 +324,7 @@ for i in p:
     ou_codes.remove(i)
 
 print(p)
-ou_codes
+# ou_codes
 """
 for loop , 对所有ou进行独立的kmeans on inb qty and outb qty
 随后merge 原始表
