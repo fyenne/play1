@@ -526,7 +526,9 @@ print("=================================1================================")
 df_final  = df_final.replace(float('inf'), 0) 
 
 
-
+"""
+计算dist to kernel, oliver版的.
+"""
 df_final0 = df_final[df_final['flag_75_wh'] == 0] 
 df_final1 = df_final[df_final['flag_75_wh'] == 1] 
 df_final0['dis_tt_kernel'] = 0
@@ -632,23 +634,60 @@ df.show(11, False)
 df.createOrReplaceTempView("df_final")
 
 df.show(15, False)
-df = spark.sql("""select ou_code, cast(operation_day as string),inbound_receive_qty
-,kernal_core1,kernal_value1,outbound_shipped_qty,kernal_core2,kernal_value2
-,total_working_hour,kernal_core3,kernal_value3,dis_core,outbound_inbound_qty_ratio
-,working_hour_per_head,total_head_count,is_holiday,max_wh,min_wh,median_wh
-,mean_wh,qt_66_wh,qt_75_wh,d_to_core_outer,percent_error_66,percent_error_75
-,date_stamp
-,bg_code,bg_name_cn,ou_name,
-kernal_core4,kernal_value4,
-pe_66_os, pe_75_os, flag_75_wh,qt_75_os,
-inb_qty_std, outb_qty_std, os_wh_std,
-outsource_working_hour,dis_core_os,
-d_to_core_outer_os,qt_75_dis_core_os_inner,qt_75_dis_core_os_outer,
-dis_tt_kernel,
-log_inb_qty,log_outb_qty, mean_inb_log, std_inb_log, mean_oub_log, std_oub_log 
-,flag_75_os, dis_os_kernel
-,inc_day 
-from df_final
+df = spark.sql("""SELECT  ou_code
+       ,cast(operation_day AS string)
+       ,inbound_receive_qty
+       ,kernal_core1
+       ,kernal_value1
+       ,outbound_shipped_qty
+       ,kernal_core2
+       ,kernal_value2
+       ,total_working_hour
+       ,kernal_core3
+       ,kernal_value3
+       ,dis_core
+       ,outbound_inbound_qty_ratio
+       ,working_hour_per_head
+       ,total_head_count
+       ,is_holiday
+       ,max_wh
+       ,min_wh
+       ,median_wh
+       ,mean_wh
+       ,qt_66_wh
+       ,qt_75_wh
+       ,d_to_core_outer
+       ,percent_error_66
+       ,percent_error_75
+       ,date_stamp
+       ,bg_code
+       ,bg_name_cn
+       ,ou_name
+       ,kernal_core4
+       ,kernal_value4
+       ,pe_66_os
+       ,pe_75_os
+       ,flag_75_wh
+       ,qt_75_os
+       ,inb_qty_std
+       ,outb_qty_std
+       ,os_wh_std
+       ,outsource_working_hour
+       ,dis_core_os
+       ,d_to_core_outer_os
+       ,qt_75_dis_core_os_inner
+       ,qt_75_dis_core_os_outer
+       ,dis_tt_kernel
+       ,log_inb_qty
+       ,log_outb_qty
+       ,mean_inb_log
+       ,std_inb_log
+       ,mean_oub_log
+       ,std_oub_log
+       ,flag_75_os
+       ,dis_os_kernel
+       ,inc_day
+FROM df_final
 """)
 df.schema
 
