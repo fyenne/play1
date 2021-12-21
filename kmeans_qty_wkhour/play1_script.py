@@ -39,13 +39,14 @@ print(df.info())
 test local
 """
 
-# link = r'C:\Users\dscshap3808\Documents\my_scripts_new\play1\ou_daily_kpi.csv'
-# df = pd.read_csv(link)
-# df.head()
-# re1 = re.compile(r'(?<=\.).+')
-# df.columns = [re1.findall(i)[0] for i in list(df.columns.to_numpy())]
- 
+link = r'C:\Users\dscshap3808\Documents\my_scripts_new\play1\dws_dsc_wh_ou_daily_kpi_sum.csv'
+df = pd.read_csv(link, sep = '\001')
+df.head()
+re1 = re.compile(r'(?<=\.).+')
+df.columns = [re1.findall(i)[0] for i in list(df.columns.to_numpy())]
 
+
+df[df['operation_day'] > 20211216]
 """
 test local end
 """
@@ -68,12 +69,14 @@ only keep rows where total working hour is not nill
 # clean_df0 :
 # df['operation_day'] = df['operation_day'].apply(int)
 # df = df[df['operation_day'] >= 20210601] 
+
+# df['inbound_receive_qty'].astype(str).str.contains('(\D\D)').sum()
 def remove_no_float(df, col):
-    df = df[~df[col].str.contains('(\D)')]
+    df = df[~df[col].astype(str).str.contains('(\D\D)')]
     return df
 
 for i in ['inbound_receive_qty', 'outbound_shipped_qty', 'total_working_hour']:
-    df = remove_no_float(i)
+    df = remove_no_float(df, i)
 
 print("=================================2_max_date == %s================================"%df['operation_day'].max())
 print(df.info())
