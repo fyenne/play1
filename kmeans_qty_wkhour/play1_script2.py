@@ -26,11 +26,10 @@ load data
 df = spark.sql("""select * 
         from dsc_dws.dws_dsc_wh_ou_daily_kpi_sum where operation_day > '20210601' """)
 
-
 # df.show(15,False)
 
 df = df.select("*").toPandas()
-df = df.fillna(0)
+
 """
 test local
 """
@@ -350,9 +349,7 @@ df_final = df_final.merge(
     how = 'left'
     )
 print("=================================calculate_1================================")
- 
-view = df_final[df_final['ou_code'] == 'CN-066'].sort_values('operation_day')
-view['operation_day'].head(40)
+  
 
 """
 add outsource part
@@ -525,7 +522,9 @@ print("=================================1================================")
 df_final  = df_final.replace(float('inf'), 0) 
 
 
-
+"""
+计算dist to kernel, oliver版的.
+"""
 df_final0 = df_final[df_final['flag_75_wh'] == 0] 
 df_final1 = df_final[df_final['flag_75_wh'] == 1] 
 df_final0['dis_tt_kernel'] = 0
@@ -552,41 +551,19 @@ print("1.2 is the os flag boundary")
 # df_final = df_final.merge(diff_tt_kn, on = ['ou_code', 'operation_day'], how = 'left').fillna(0)
 
 
-"""
-ssr corr
-"""
-std_table = df_final.groupby('ou_code').agg({
-    'inbound_receive_qty': ['std'],
-    'outbound_shipped_qty': ['std'],
-    'outsource_working_hour': ['std']
-    }).reset_index()
+# """
+# ssr corr
+# """
+# std_table = df_final.groupby('ou_code').agg({
+#     'inbound_receive_qty': ['std'],
+#     'outbound_shipped_qty': ['std'],
+#     'outsource_working_hour': ['std']
+#     }).reset_index()
 
-std_table.columns = ['ou_code', 'inb_qty_std', 'outb_qty_std', 'os_wh_std']
+# std_table.columns = ['ou_code', 'inb_qty_std', 'outb_qty_std', 'os_wh_std']
 
-df_final = df_final.merge(std_table, on = 'ou_code', how = 'left')
+# df_final = df_final.merge(std_table, on = 'ou_code', how = 'left')
 
-
-def data_logs(df_final):
-    df_final['log_inb_qty'] = np.log2(df_final['inbound_receive_qty'])
-    df_final['log_outb_qty'] = np.log2(df_final['outbound_shipped_qty'])
-    df_final_copy = df_final[
-        df_final['log_inb_qty'] > -10000 & ~np.isnan(df_final['log_inb_qty'])]  
-    df_final_copy2 = df_final[
-        df_final['log_outb_qty'] > -10000 & ~np.isnan(df_final['log_outb_qty'])] 
-    in_boundary = df_final_copy.groupby('ou_code')['log_inb_qty'].agg(['mean', 'std']).reset_index()
-    ou_boundary = df_final_copy2.groupby('ou_code')['log_outb_qty'].agg(['mean', 'std']).reset_index()
-    in_boundary.columns = ['ou_code', 'mean_inb_log', 'std_inb_log']
-    ou_boundary.columns = ['ou_code', 'mean_oub_log', 'std_oub_log']
-    return in_boundary , ou_boundary
-
-in_boundary , ou_boundary = data_logs(df_final)
-df_final = df_final.merge(
-    in_boundary, on = 'ou_code', how = 'left').merge(
-    ou_boundary, on = 'ou_code', how = 'left')
-
-df_final  = df_final.replace(float('inf'), 0) 
-df_final['log_inb_qty'] = df_final['log_inb_qty'].astype(float)
-df_final['log_outb_qty'] = df_final['log_outb_qty'].astype(float)#log_inb_qty	log_outb_qty
 print("=================================2================================")
 """
 ssr corr done
@@ -603,15 +580,15 @@ df_final['kernal_value4'] = df_final['kernal_value4'].astype(float)
 df_final['pe_66_os'] = df_final['pe_66_os'].astype(float)
 df_final['pe_75_os'] = df_final['pe_75_os'].astype(float)
 df_final['kernal_core4'] = df_final['kernal_core4'].astype(int)
-pd.set_option("display.max_rows", None, "display.max_columns", None)
+
 print(df_final.head(5))
 
 """
 add ou_name & bg_name
 """
 
-df_ou_bg = spark.sql(
-    """select bg_code,bg_name_cn,ou_code,ou_name from dsc_dws.dws_dsc_wh_ou_daily_kpi_sum group by bg_code,bg_name_cn,ou_code,ou_name""")
+df_ou_bg = spark.sql("""select bg_code,bg_name_cn,ou_code,ou_name
+        from dsc_dws.dws_dsc_wh_ou_daily_kpi_sum group by bg_code,bg_name_cn,ou_code,ou_name """)
         
 df_ou_bg = df_ou_bg.select("*").toPandas()
 df_ou_bg = df_ou_bg[['bg_code','bg_name_cn','ou_code','ou_name']]
@@ -630,32 +607,88 @@ df.show(11, False)
 
 df.createOrReplaceTempView("df_final")
 
-df.show(15, False)
-df = spark.sql("""select ou_code, cast(operation_day as string),inbound_receive_qty
-,kernal_core1,kernal_value1,outbound_shipped_qty,kernal_core2,kernal_value2
-,total_working_hour,kernal_core3,kernal_value3,dis_core,outbound_inbound_qty_ratio
-,working_hour_per_head,total_head_count,is_holiday,max_wh,min_wh,median_wh
-,mean_wh,qt_66_wh,qt_75_wh,d_to_core_outer,percent_error_66,percent_error_75
-,date_stamp
-,bg_code,bg_name_cn,ou_name,
-kernal_core4,kernal_value4,
-pe_66_os, pe_75_os, flag_75_wh,qt_75_os,
-inb_qty_std, outb_qty_std, os_wh_std,
-outsource_working_hour,dis_core_os,
-d_to_core_outer_os,qt_75_dis_core_os_inner,qt_75_dis_core_os_outer,
-dis_tt_kernel,
-log_inb_qty,log_outb_qty, mean_inb_log, std_inb_log, mean_oub_log, std_oub_log 
-,flag_75_os, dis_os_kernel
-,inc_day 
-from df_final
-""")
-df.schema
 
-df.repartition("inc_day").write.mode("overwrite").partitionBy(
-    "inc_day").parquet(
-        "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
-spark.sql("""msck repair table dsc_dws.dws_qty_working_hour_labeling_sum_df""")
-spark.sql("""alter table dsc_dws.dws_qty_working_hour_labeling_sum_df drop partition (inc_day='20210817')""")
+
+sql_out = """select  
+ou_code 
+,bg_code 
+,bg_name_cn
+,operation_day
+,is_holiday
+,inbound_receive_qty
+,kernal_core1
+,kernal_value1
+,outbound_shipped_qty
+,kernal_core2
+,kernal_value2
+,total_working_hour
+,kernal_core3
+,kernal_value3
+,outsource_working_hour
+,kernal_core4
+,kernal_value4
+,total_head_count
+,working_hour_per_head
+,max_wh
+,min_wh
+,median_wh
+,mean_wh
+,qt_75_wh
+,qt_75_os
+,flag_75_os
+,flag_75_wh
+,dis_tt_kernel
+,dis_os_kernel
+,date_stamp 
+from 
+df_final 
+order by operation_day desc
+"""
+sql_out = sql_out.replace('\n', '');sql_out
+
+inc_df = spark.sql(sql_out)
+print('000')
+
+"""
+to bdp
+"""
+# pd to spark table 
+# spark table as view, aka in to spark env. able to be selected or run by spark sql in the following part.
+
+# print("==============================spark_df, env=%s!================================="%env)
+
+"""
+merge table preparation:
+"""
+merge_table = "tmp_dsc_dws.dws_qty_working_hour_labeling_sum_df"
+print(merge_table)
+
+# inc_df = spark.sql("""select * from df""")
+print("===============================merge_table--%s================================="%merge_table)
+
+print('{note:=>50}'.format(note=merge_table) + '{note:=>50}'.format(note=''))
+
+spark.sql("""set spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict""")
+# (table_name, df, 
+# pk_cols, order_cols, partition_cols=None):
+
+# merge_data = MergeDFToTable(merge_table, inc_df, \
+#     "ou_code, operation_day", "operation_day", partition_cols=None)
+
+
+merge_data = MergeDFToTable(merge_table, inc_df, \
+    "ou_code, operation_day", "operation_day", partition_cols=None)
+merge_data.merge()
+
+
+
+
+    
+# df.repartition("inc_day").write.mode("overwrite").partitionBy(
+#     "inc_day").parquet(
+#         "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
+# spark.sql("""msck repair table dsc_dws.dws_qty_working_hour_labeling_sum_df""")
+# spark.sql("""alter table dsc_dws.dws_qty_working_hour_labeling_sum_df drop partition (inc_day='20210817')""")
 
 
     

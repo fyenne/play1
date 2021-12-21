@@ -13,7 +13,9 @@ class MergeDFToTable:
         self.order_cols = order_cols
         self.partition_cols = partition_cols
         app_name = "merge " + table_name
-        self.spark = SparkSession.builder.appName(app_name).enableHiveSupport().getOrCreate()
+        self.spark = SparkSession.builder.appName(app_name).enableHiveSupport()\
+            .config("hive.exec.dynamic.partition", "true")\
+            .config("hive.exec.dynamic.partition.mode", "nonstrict").getOrCreate()
 
     def merge(self):
         # get the table stored location
@@ -49,7 +51,7 @@ class MergeDFToTable:
                     order by """ + self.order_cols + """ desc) as rn  from
                 (
                     select t.""" + ",t.".join(cols) + """ from inc_partitions p 
-                    inner join """ + self.table_name + join_condition_str + """
+                    inner join """ + self.table_name + """ t on """ + join_condition_str + """
                     union all
                     select """ + select_cols_str + """ from inc_table
                 ) a
