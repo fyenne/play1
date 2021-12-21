@@ -69,3 +69,49 @@ ou_code
 from
 dsc_dws.dws_qty_working_hour_labeling_sum_df
 order by operation_day desc
+
+
+
+
+ 
+
+CREATE EXTERNAL TABLE `tmp_dsc_dws.dws_qty_working_hour_labeling_sum_df`(
+`ou_code` string comment '单位名称_单位名称',
+`bg_code` string comment 'bg的代码',
+`bg_name_cn` string comment 'bg的名字',
+`operation_day` string comment '操作时间_操作时间',
+`is_holiday` bigint comment '假期_假期',
+`inbound_receive_qty` double comment '入库数量_入库数量',
+`kernal_core1` bigint comment '聚类_聚类1入库',
+`kernal_value1` double comment '聚类中心_聚类中心1',
+`outbound_shipped_qty` double comment '出库数量_出库数量',
+`kernal_core2` bigint comment '聚类2_聚类2出库',
+`kernal_value2` double comment '聚类中心2_聚类中心2',
+`total_working_hour` double comment '总工时_总工时',
+`kernal_core3` bigint comment '聚类3_总工时',
+`kernal_value3` double comment '聚类中心3_聚类中心3',
+`outsource_working_hour` double comment '外包os工时',
+`kernal_core4` bigint comment '聚类4,外包os的聚类',
+`kernal_value4` double comment '外包os聚类中心3_聚类中心3',
+`total_head_count` double comment '总人头_总人头',
+`working_hour_per_head` double comment '人均工时_人均工时',
+`max_wh` double comment '聚类中最大工时_聚类中最大工时',
+`min_wh` double comment '聚类中最小工时_聚类中最小工时',
+`median_wh` double comment '聚类中中位数工时_聚类中中位数工时',
+`mean_wh` double comment '聚类中平均数工时_聚类中平均数工时',
+`qt_75_wh` double comment '聚类中1/4quantile工时',
+`qt_75_os` double comment 'qt75外包',
+`flag_75_os` string comment '外包os标注flag',
+`flag_75_wh` string comment '总工时标注flag',
+`dis_tt_kernel` double comment 'distance总工时到qt_75_wh*1.2的位置',
+`dis_os_kernel` double comment 'distance外包工时到qt_75_os*1.2的位置',
+`date_stamp` string comment '更新时间'
+)
+COMMENT '出入库工时标签_dws_qty_working_hour_labeling_sum_df'
+
+ROW FORMAT SERDE
+'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
+STORED AS INPUTFORMAT
+'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat'
+OUTPUTFORMAT
+'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'

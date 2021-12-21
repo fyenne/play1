@@ -31,11 +31,15 @@ df = spark.sql("""select *
 
 df = df.select("*").toPandas()
 df = df.fillna(0)
+df = df.replace([np.inf, -np.inf], 0) 
+print(df['operation_day'].max())
+print("=================================1_max_date == %s================================"%df['operation_day'].max())
+print(df.info())
 """
 test local
 """
 
-# link = r'C:\Users\dscshap3808\Documents\my_scripts_new\play1\daily_ou_kpi.csv'
+# link = r'C:\Users\dscshap3808\Documents\my_scripts_new\play1\ou_daily_kpi.csv'
 # df = pd.read_csv(link)
 # df.head()
 # re1 = re.compile(r'(?<=\.).+')
@@ -64,6 +68,15 @@ only keep rows where total working hour is not nill
 # clean_df0 :
 # df['operation_day'] = df['operation_day'].apply(int)
 # df = df[df['operation_day'] >= 20210601] 
+def remove_no_float(df, col):
+    df = df[~df[col].str.contains('(\D)')]
+    return df
+
+for i in ['inbound_receive_qty', 'outbound_shipped_qty', 'total_working_hour']:
+    df = remove_no_float(i)
+
+print("=================================2_max_date == %s================================"%df['operation_day'].max())
+print(df.info())
 
 clean_df2 = df.groupby('ou_code')[[
     'inbound_receive_qty', 'outbound_shipped_qty'
@@ -87,8 +100,11 @@ df = df[[
     'other_working_hour', 'direct_working_hour', 'indirect_working_hour',
     'outbound_inbound_qty_ratio', 'perm_working_hour_ratio',
     'working_hour_per_head', 'location_usage_rate', 'location_idle_rate']]
+
 df = df.fillna(0)
 df = df[df['total_working_hour'] != 0]
+print(df['operation_day'].max())
+print("=================================3_max_date == %s================================"%df['operation_day'].max())
   
 
 """
@@ -350,6 +366,7 @@ df_final = df_final.merge(
     how = 'left'
     )
 print("=================================calculate_1================================")
+print("=================================df_final_max_date == %s================================"%max(df_final['operation_day']))
  
 view = df_final[df_final['ou_code'] == 'CN-066'].sort_values('operation_day')
 view['operation_day'].head(40)
