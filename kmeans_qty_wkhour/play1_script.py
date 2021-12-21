@@ -24,7 +24,7 @@ load data
 
 
 df = spark.sql("""select * 
-        from dsc_dws.dws_dsc_wh_ou_daily_kpi_sum""")
+        from dsc_dws.dws_dsc_wh_ou_daily_kpi_sum where operation_day > '20210601' """)
 
 # df.show(15,False)
 
@@ -61,8 +61,8 @@ tt_workinghour always nill, will be removed.
 only keep rows where total working hour is not nill 
 """
 # clean_df0 :
-df['operation_day'] = df['operation_day'].apply(int)
-df = df[df['operation_day'] >= 20210601] 
+# df['operation_day'] = df['operation_day'].apply(int)
+# df = df[df['operation_day'] >= 20210601] 
 
 clean_df2 = df.groupby('ou_code')[[
     'inbound_receive_qty', 'outbound_shipped_qty'
@@ -635,7 +635,7 @@ df.createOrReplaceTempView("df_final")
 
 df.show(15, False)
 df = spark.sql("""SELECT  ou_code
-       ,cast(operation_day AS string)
+       ,cast(operation_day AS string) as operation_day
        ,inbound_receive_qty
        ,kernal_core1
        ,kernal_value1
@@ -690,12 +690,48 @@ df = spark.sql("""SELECT  ou_code
 FROM df_final
 """)
 df.schema
+ 
 
-df.repartition("inc_day").write.mode("overwrite").partitionBy(
-    "inc_day").parquet(
-        "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
-spark.sql("""msck repair table dsc_dws.dws_qty_working_hour_labeling_sum_df""")
-spark.sql("""alter table dsc_dws.dws_qty_working_hour_labeling_sum_df drop partition (inc_day='20210817')""")
+
+"""
+to bdp
+"""
+# pd to spark table
+spark_df = spark.createDataFrame(df)
+# spark table as view, aka in to spark env. able to be selected or run by spark sql in the following part.
+spark_df.createOrReplaceTempView("df")
+print("==============================spark_df, env=%s!================================="%env)
+print(spark_df)
+
+"""
+merge table preparation:
+"""
+
+
+merge_table = "dsc_dws.dws_qty_working_hour_labeling_sum_df"
+print(merge_table)
+
+inc_df = spark.sql("""select * from df""")
+print("===============================merge_table--%s================================="%merge_table)
+# merge_table = "tmp_dsc_dws.dws_dsc_huawei_operation_sum_df"
+# print(merge_table)
+print('{note:=>50}'.format(note=merge_table) + '{note:=>50}'.format(note=''))
+
+spark.sql("""set spark.hadoop.hive.exec.dynamic.partition.mode=nonstrict""")
+# (table_name, df, pk_cols, order_cols, partition_cols=None):
+merge_data = MergeDFToTable(merge_table, inc_df, \
+    "ou_code, operation_day, inc_day", "operation_day", partition_cols="inc_day")
+merge_data.merge()
+
+
+
+
+    
+# df.repartition("inc_day").write.mode("overwrite").partitionBy(
+#     "inc_day").parquet(
+#         "hdfs://dsc/hive/warehouse/dsc/DWS/dsc_dws/dws_qty_working_hour_labeling_sum_df")
+# spark.sql("""msck repair table dsc_dws.dws_qty_working_hour_labeling_sum_df""")
+# spark.sql("""alter table dsc_dws.dws_qty_working_hour_labeling_sum_df drop partition (inc_day='20210817')""")
 
 
     

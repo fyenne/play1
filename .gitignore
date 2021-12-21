@@ -8,4 +8,4 @@
 *.log
 kmeans_qty_wkhour/test.ipynb
 *.pdf
-*.md
+*.md  
